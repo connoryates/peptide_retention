@@ -3,6 +3,7 @@ package API::Routes::Upload;
 use Dancer ':syntax';
 use Dancer::Exception;
 use API::Plugins::Upload;
+use API::Plugins::KeyManager;
 
 hook 'before' => sub {
     my $key_manager = key_manager();
