@@ -1,0 +1,5 @@
+database:
+     pg:
+         dsn: "DBI:pg:dbname=yeast;host=192.168.0.11"
+         user: "peptide"
+         password: "powerhouse7"
