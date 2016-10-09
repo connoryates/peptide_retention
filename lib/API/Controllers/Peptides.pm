@@ -20,4 +20,10 @@ sub retention_info {
     return $self->model->get_retention_info({peptide => $peptide});
 }
 
+sub add_retention_info {
+    my ($self, $info) = @_;
+
+    return $self->model->add_retention_info($info);
+}
+
 __PACKAGE__->meta->make_immutable;

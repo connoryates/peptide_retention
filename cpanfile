@@ -7,3 +7,4 @@ requires 'CHI::Driver::Redis', 0;
 requires 'InSilicoSpectro::InSilico::RetentionTimer', 0;
 requires 'InSilicoSpectro::InSilico::RetentionTimer::Hodges', 0;
 requires 'Try::Tiny', 0;
+requires 'Furl', 0;
