@@ -1,0 +1,4 @@
+sudo apt-get -y install libgd2-xpm-dev build-essential
+sudo apt-get install libgd3
+
+
