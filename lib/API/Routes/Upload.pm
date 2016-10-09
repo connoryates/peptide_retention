@@ -1,7 +1,7 @@
 package API::Routes::Upload;
 
 use Dancer ':syntax';
-use Dancer::Plugin::Upload;
+use Dancer::Exception;
 use API::Plugins::Upload;
 
 hook 'before' => sub {

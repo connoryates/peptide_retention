@@ -1,7 +1,10 @@
-package Dashboard;
+package API;
 use Dancer ':syntax';
 
-use Dashboard::Routes::Predict;
-use Dashboard::Routes::Upload;
+use API::Routes::Peptides;
+use API::Plugins::Peptides;
+use API::Routes::Upload;
+use API::Plugins::Upload;
+use API::Routes::Main;
 
 true;

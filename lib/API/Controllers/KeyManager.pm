@@ -3,12 +3,12 @@ use Moose;
 
 use Peptide::Model;
 
-has 'model' => sub {
-    is      => 'ro,
+has 'model' => (
+    is      => 'ro',
     isa     => 'Peptide::Model',
     lazy    => 1,
     builder => '_build_model',
-};
+);
 
 sub _build_model {
     return Peptide::Model->new;

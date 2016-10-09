@@ -3,7 +3,7 @@ use Moose;
 
 use InSilicoSpectro::InSilico::RetentionTimer;
 use InSilicoSpectro::InSilico::RetentionTimer::Hodges;
-use Peptide::Model;
+use List::Util qw(sum);
 
 my %BB_VALUES = (
     A => 0.610,
@@ -33,22 +33,10 @@ has 'timer' => (
     isa     => 'InSilicoSpectro::InSilico::RetentionTimer::Hodges',
     lazy    => 1,
     builder => '_build_timer',
-    handles => [qw(predict)],
-);
-
-has 'model' => (
-     is      => 'ro',
-     isa     => 'Peptide::Model',
-     lazy    => 1,
-     builder => '_build_model',
 );
 
 sub _build_timer {
     return InSilicoSpectro::InSilico::RetentionTimer::Hodges->new;
-}
-
-sub _build_model {
-    return Peptide::Model->new;
 }
 
 sub tryptic {
@@ -62,22 +50,23 @@ sub tryptic {
 }
 
 sub tryptic_vals {
-    my ($self, $seq) = @_;
+    my ($self, $peptide) = @_;
 
-    my $tryptic = $self->tryptic($seq);
+    my $bb_vals = $self->assign_bb_values($peptide);
+    my $ret     = $self->timer->predict($peptide);
 
-    my %seq; 
-    foreach my $tryptic (@$tryptic) {
-        my $bb_vals = $self->assign_bb_values($tryptic);
-        my $ret     = $self->retention($tryptic);
+    # create_table($tryptic, $bb_vals, $ret);
 
-        # create_table($tryptic, $bb_vals, $ret);
+    my $peptide_info = {
+        retention_info => {
+            peptide              => $peptide,
+            predicted_retention  => $ret,
+            bullbreese           => $bb_vals,
+            prediction_algorithm => 'hodges',
+        },
+    };
 
-        $seq{$tryptic}{bullbreese} = $bb_vals;
-        $seq{$tryptic}{retention}  = $ret;
-    }
-
-    return \%seq;
+    return $peptide_info;
 }
 
 sub assign_bb_values {
@@ -90,12 +79,6 @@ sub assign_bb_values {
     my $bb_vals = sum(@bb_vals);
 
     return $bb_vals;
-}
-
-sub predict {
-    my ($self, $sequence) = @_;
-
-    return $self->timer->predict($sequence);
 }
 
 __PACKAGE__->meta->make_immutable;

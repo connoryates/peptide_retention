@@ -1,12 +1,14 @@
-package API::Plugins::Peptide;
+package API::Plugins::Peptides;
 
 use Dancer ':syntax';
 use Dancer::Plugin;
 
-use API::Controllers::Peptide;
+use API::Controllers::Peptides;
 
-plugin peptide_manager => sub {
-    return API::Controllers::Peptide->new;
+register peptide_manager => sub {
+    return API::Controllers::Peptides->new;
 };
 
 register_plugin;
+
+true;
