@@ -10,7 +10,7 @@ hook 'before' => sub {
     return 1;
 };
 
-post '/api/retention/peptide' => sub {
+post '/api/v1/retention/peptide/info' => sub {
     my $params = params || {};
 
     my $authorized = var 'authorized';
@@ -29,5 +29,27 @@ post '/api/retention/peptide' => sub {
 
     return encode_json($data);
 }
+
+post '/api/v1/retention/peptide/add' => sub {
+    my $params = params || {};
+
+    my $authorized = var 'authorized';
+
+    send_error("Unauthorized" => 401) unless defined $authorized;
+
+    foreach my $required (qw(peptide retention_time)) {
+        send_error("Missing param : $required" => 500) unless defined $params->{$required};
+    }
+
+    my $status;
+    try {
+        my $peptide_manager = peptide_manager();
+           $status = $peptide->add_retention_info($params);
+    } catch {
+        send_error("Something went wrong" => 500);
+    };
+
+    return status;
+};
 
 true;
