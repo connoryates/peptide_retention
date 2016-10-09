@@ -53,7 +53,7 @@ sub tryptic_vals {
     my ($self, $peptide) = @_;
 
     my $bb_vals = $self->assign_bb_values($peptide);
-    my $ret     = $self->timer->predict($peptide);
+    my $ret     = $self->timer->predict(peptide => $peptide);
 
     # create_table($tryptic, $bb_vals, $ret);
 
