@@ -1,7 +1,7 @@
 requires 'Dancer', 0;
 requires 'DBI', 0;
 requires 'Mesoderm', 0;
-requires 'DBD::mysql', 0;
+requires 'DBD::Pg', 0;
 requires 'CHI', 0;
 requires 'CHI::Driver::Redis', 0;
 requires 'InSilicoSpectro::InSilico::RetentionTimer', 0;

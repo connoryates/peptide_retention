@@ -26,32 +26,33 @@ sub _build_retention {
     return Peptide::Retention->new;
 }
 
-#sub get_retention_info {
-#    my ($self, $peptide) = @_;
+sub get_retention_info {
+    my ($self, $peptide) = @_;
 
-#    return $self->schema->peptide->search({peptide => $peptide})
-#      || $self->_get_retention_info($peptide);
-#}
+    return $self->schema->peptide->search({peptide => $peptide})
+      || $self->_get_retention_info($peptide);
+}
 
 sub _get_retention_info {
     my ($self, $peptide) = @_;
 
-    return $self->retention->tryptic_vals($peptide);
+    my $info = $self->retention->tryptic_vals($peptide);
+
+    $self->add_retention_info($info);
+
+    return $info;
 }
 
 sub add_retention_info {
     my ($self, $info) = @_;
 
-    my $bb = $self->assign_bb_vals($info->{peptide});
+    die "No retention info key detected" unless defined $info->{retention_info};
 
-    die "Cannot determine BullBreese values" unless $bb;
-
-    $info->{bullbreese} = $bb;
-
-    return $self->schema->peptide->insert($info);
+    return $self->schema->uniprot_yeast->insert($info->{retention_info});
 }
 
 sub validate_api_key {
     return 1;
 }
+
 __PACKAGE__->meta->make_immutable;
