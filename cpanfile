@@ -17,3 +17,7 @@ requires 'Test::Most', 0;
 requires 'Statistics::Regression', 0;
 requires 'XML::Parser', 0;
 requires 'Math::Spline', 0;
+requires 'DBIx::Class::Schema', 0;
+requires 'Statistics::Basic::Correlation', 0;
+requires 'YAML::XS', 0;
+requires 'Starman', 0;

@@ -29,19 +29,14 @@ sub _build_client {
 sub retention_info {
     my ($self, $peptide) = @_;
 
-    return $self->model->_get_retention_info($peptide);
+    return $self->model->get_retention_info($peptide);
 }
 
 sub add_retention_info {
     my ($self, $info) = @_;
 
-    if ($ENV{DB_HOST}) {
-        return $self->model->add_retention_info($info);
-    } else {
-        return $self->client->insert_peptide_info($info);
-    }
+    return $self->model->add_retention_info($info);
 
-    return;
 }
 
 __PACKAGE__->meta->make_immutable;

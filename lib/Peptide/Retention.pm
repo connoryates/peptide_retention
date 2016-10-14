@@ -28,14 +28,14 @@ my %BB_VALUES = (
     V => -0.750,
 );
 
-has 'timer' => (
+has 'hodges' => (
     is      => 'ro',
     isa     => 'InSilicoSpectro::InSilico::RetentionTimer::Hodges',
     lazy    => 1,
-    builder => '_build_timer',
+    builder => '_build_hodges',
 );
 
-sub _build_timer {
+sub _build_hodges {
     return InSilicoSpectro::InSilico::RetentionTimer::Hodges->new;
 }
 
@@ -52,12 +52,18 @@ sub tryptic {
 sub tryptic_vals {
     my ($self, $peptide) = @_;
 
-    my $bb_vals = $self->assign_bb_values($peptide);
-    my $ret     = $self->timer->predict(peptide => $peptide);
+    my $bb_vals      = $self->assign_bb_values($peptide);
+    my $peptide_info = $self->hodges_predict($peptide, $bb_vals);
 
-    # create_table($tryptic, $bb_vals, $ret);
+    return $peptide_info;
+}
 
-    my $peptide_info = {
+sub hodges_predict {
+    my ($self, $peptide, $bb_vals) = @_;
+
+    my $ret = $self->hodges->predict(peptide => $peptide);
+
+    return +{
         retention_info => {
             peptide              => $peptide,
             predicted_retention  => $ret,
@@ -65,8 +71,6 @@ sub tryptic_vals {
             prediction_algorithm => 'hodges',
         },
     };
-
-    return $peptide_info;
 }
 
 sub assign_bb_values {

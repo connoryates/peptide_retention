@@ -1,5 +1,5 @@
 database:
      pg:
-         dsn: "DBI:Pg:dbname=yeast;host=192.168.0.8;port=5432;"
+         dsn: "dbi:Pg:dbname=yeast;host=192.168.0.8;port=5432"
          user: "connoryates"
          password: "powerhouse7"

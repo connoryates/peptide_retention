@@ -1,4 +1,8 @@
 sudo apt-get -y install libgd2-xpm-dev build-essential
 sudo apt-get install libgd3
+sudo apt-get install redis-tools
+sudo apt-get install postgresql-client
+sudo apt-get install libpq-dev
+sudo apt-get install libjs-d3
 
 

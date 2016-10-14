@@ -6,5 +6,6 @@ use API::Plugins::Peptides;
 use API::Routes::Upload;
 use API::Plugins::Upload;
 use API::Routes::Main;
+use Dashboard::Routes::Chart;
 
 true;
