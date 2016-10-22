@@ -3,3 +3,7 @@ database:
          dsn: "dbi:Pg:dbname=yeast;host=HOST;port=5432"
          user: "USER"
          password: "PASS"
+chi_config:
+    server: 127.0.0.1:6379
+    driver: Redis
+    debug: 0

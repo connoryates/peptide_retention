@@ -1,8 +1,36 @@
+echo "Building the OS dependencies. Please have the sudo password available"
+
+sudo apt-get update
+
 sudo apt-get -y install libgd2-xpm-dev build-essential
 sudo apt-get install libgd3
 sudo apt-get install redis-tools
+sudo apt-get install redis-server
 sudo apt-get install postgresql-client
 sudo apt-get install libpq-dev
 sudo apt-get install libjs-d3
 
+if [ "$EUID" -eq 0 ]
+  then echo "Refusing to install Perl dependencies as root"
+  exit
+fi
 
+echo "Building base Perl dependencies"
+
+echo "Installing perlbrew"
+\wget -O - https://install.perlbrew.pl | bash
+
+source ~/perl5/perlbrew/etc/bashrc 
+
+echo "Installing perl-5.22.0"
+perlbrew install perl-5.22.0
+
+echo "Installing cpanm with perlbrew"
+perlbrew install cpanm
+
+echo "Installing perl modules"
+cpanm -nlv --installdeps .
+
+echo "Running tests"
+prove -rlv xt/
+prove -rlv t/
