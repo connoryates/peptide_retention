@@ -44,3 +44,24 @@ sub dbh {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+=head1 our %INSTANCES
+
+Hold instances of this PACKAGE in memory and return the blessed instance instead of
+creating a new PACKAGE. Minimizes database connections
+
+=head2 around BUILDARGS
+
+Moose hook to check for and set blessed packages in %INSTANCES. 
+
+=head3 connect_args
+
+Return the DBI connection arguments. Mandatory for Mesoderm.
+
+=head4 dbh
+
+Return the stored dbh handle
+
+=cut

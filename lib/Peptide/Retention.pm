@@ -86,3 +86,29 @@ sub assign_bb_values {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+Peptide::Retention
+
+Class to hold the methods for retention prediction
+
+=head1 tryptic
+
+Splits strings into their tryptic cleavage patterns
+
+=head2 tryptic_vals
+
+Sends the parsed sequences to assign Bull and Breese values and predict retention time
+
+=head3 hodges_predict
+
+Uses the Hodges algorithm to predict retention time of the input sequence
+
+=head4 assign_bb_values
+
+Assign the input sequence to their Bull and Breese values
+
+=cut
+
+1;
