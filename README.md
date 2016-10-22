@@ -3,15 +3,15 @@
 This doc contains instructions for setting up the API.
 For information about what the API does and how to use, please refer to the wiki
 
-Perl 5.22
+Requirements:
 
-Debian
+- perlbrew with Perl v5.22
 
-Postgres 9.6
+- Debian
 
-Redis
+- Postgres 9.6
 
-perlbrew
+- Redis
 
 ### Setup
 
