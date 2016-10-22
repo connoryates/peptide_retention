@@ -68,7 +68,9 @@ This should bind the server to: ```http://0.0.0.0:5000```
 
 In another shell, hit the healthcheck enpoint:
 
-```http://0.0.0.0:5000/healthcheck```
+```
+curl -X GET http://0.0.0.0:5000/healthcheck
+```
 
 
 
