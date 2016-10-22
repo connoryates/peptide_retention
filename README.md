@@ -20,7 +20,7 @@ Build the app dependencies with:
 $ ./bin/build-app
 ```
 
-**Make sure you do not run this as root!** But as a user with ```sudo``` access. This will install and build ```perlbrew```
+*Make sure you do not run this as root!* But as a user with ```sudo``` access. This will install and build ```perlbrew```
 and call the command: ```cpanm --installdeps``` which reads all of the Perl dependencies listed in the ```cpanfile``` and builds them.
 
 Add this line to your ```~/.bash_profile```:
@@ -72,5 +72,6 @@ In another shell, hit the healthcheck enpoint:
 curl -X GET http://0.0.0.0:5000/healthcheck
 ```
 
+Please report any issues you have with the setup.
 
-
+If everything goes smoothly, see the wiki for more information
