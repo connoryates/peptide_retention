@@ -1,5 +1,8 @@
 ## Peptide Retention
 
+This doc contains instructions for setting up the API.
+For information about what the API does and how to use, please refer to the wiki
+
 Perl 5.22
 
 Debian
