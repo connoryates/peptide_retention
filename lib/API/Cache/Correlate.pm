@@ -13,7 +13,7 @@ has 'namespace' => ( is => 'rw', isa => 'Str', default => sub { return "correlat
 sub set_correlate_cache {
     my ($self, $data) = @_;
 
-    foreach my $required (qw(filter correlation)) {
+    foreach my $required (qw(key correlation)) {
         die "Missing required arg : $required"
           unless defined $data->{$required};
     }
@@ -21,15 +21,15 @@ sub set_correlate_cache {
     my $chi = $self->chi;
 
     # Don't attempt to cache existing keys
-    return if $chi->is_valid($data->{filter});
+    return if $chi->is_valid($data->{key});
 
     my $status;
     try {
-        my $filter = delete $data->{filter};
-        my $json   = encode_json({ correlation => "$data->{correlation}" });
-        $status    = $chi->set($filter, $json, EXPIRATION_TIME);
+        my $key  = delete $data->{key};
+        my $json = encode_json({ correlation => "$data->{correlation}" });
+        $status  = $chi->set($key, $json, EXPIRATION_TIME);
     } catch {
-        $status = undef;
+        $status  = undef;
         warn "Failed to set cache : $_";
     };
 
@@ -37,13 +37,13 @@ sub set_correlate_cache {
 }
 
 sub get_correlate_cache {
-    my ($self, $filter) = @_;
+    my ($self, $key) = @_;
 
-    die "Missing required arg : filter"
-      unless defined $filter;
+    die "Missing required arg : key"
+      unless defined $key;
 
     my $chi   = $self->chi;
-    my $json  = $self->chi->get($filter);
+    my $json  = $self->chi->get($key);
 
     return undef unless defined $json;
 
@@ -52,7 +52,7 @@ sub get_correlate_cache {
         $data = decode_json($json);
     } catch {
         $data = undef;
-        warn "Failed to get $filter from cache : $_";
+        warn "Failed to get $key from cache : $_";
     };
 
     return $data;

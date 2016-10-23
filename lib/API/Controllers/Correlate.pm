@@ -50,21 +50,24 @@ sub correlate_peptides {
           unless defined $data->{$required};
     }
 
-    my $cache = $self->cache;
+    my $cache     = $self->cache;
+    my $cache_key = $data->{filter} . $data->{data};
 
-    if ( my $cached = $cache->get_correlate_cache($data->{filter}) ) {
+    if ( my $cached = $cache->get_correlate_cache($cache_key) ) {
         return $cached->{correlation};
     }
 
     my $filtered;
     try {
-        $filtered  = $self->model->get_peptide_retention_filtered_data($data);
+        $filtered = $self->model->get_peptide_retention_filtered_data($data);
+        use Data::Dumper;
+        print Dumper $filtered;
     } catch {
         die "Failed to get correlation data : $_";
     };
 
-    my $vector_1   = $filtered->{bullbreese};
-    my $vector_2   = $filtered->{retention_info};
+    my $vector_1  = $filtered->{bullbreese};
+    my $vector_2  = $filtered->{retention_info};
 
     my $correlation;
     try {
@@ -75,7 +78,7 @@ sub correlate_peptides {
 
     if ($correlation ne 'n/a') {
         $cache->set_correlate_cache({
-           filter      => $data->{filter},
+           key         => $cache_key,
            correlation => $correlation,
         });
 

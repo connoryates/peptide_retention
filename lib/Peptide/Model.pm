@@ -143,7 +143,7 @@ sub _peptide_length_filter {
     my ($self, $peptide_filter_length) = @_;
 
     my $rs = $self->schema->uniprot_yeast->search({
-        length => $peptide_filter_length,
+        length => "$peptide_filter_length",
     });
 
     my @bullbreese     = ();
