@@ -116,10 +116,13 @@ sub get_peptide_retention_correlation_data {
 sub get_peptide_retention_filtered_data {
     my ($self, $filter) = @_;
 
+    use Data::Dumper;
+    print Dumper $filter;
+
     die "Argument filter must be a HashRef"
       unless ref($filter) and ref($filter) eq 'HASH';
 
-    my $filter_type = $filter->{type};
+    my $filter_type = $filter->{filter};
     my $filter_data = $filter->{data};
 
     # TODO: support more than one filter type
@@ -127,9 +130,14 @@ sub get_peptide_retention_filtered_data {
       unless defined $filter_type or $filter_type !~ /peptide_length/;
 
     # TODO: add filters to queries instead of filtering in memory
-    my $rs = $self->schema->uniprot_yeast->search({
-        order_by => { -asc => 'length' }
-    });
+    my $rs = $self->schema->uniprot_yeast->search(
+        {},
+        {
+            order_by => {
+                -desc => 'length'
+            },
+        },
+    );
 
     my @bullbreese     = ();
     my @retention_info = ();
@@ -137,7 +145,7 @@ sub get_peptide_retention_filtered_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        if (length($peptide) == $filter_data) {
+        if (length($peptide->{peptide}) == $filter_data) {
             push @bullbreese, $peptide->{bullbreese};
             # TODO: Support algorithm filters
             push @retention_info, $peptide->{hodges_prediction};

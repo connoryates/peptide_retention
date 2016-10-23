@@ -22,7 +22,7 @@ has 'correlation' => (
 
 has 'cache' => (
     is      => 'ro',
-    isa     => 'API::Cache::Correlate',
+    isa     => 'API::Cache',
     lazy    => 1,
     builder => '_build_cache',
 );
@@ -69,10 +69,14 @@ sub correlate_peptides {
     my $correlation;
     try {
         $correlation = $self->correlation->correlate($vector_1, $vector_2);
-        $cache->set_correlate_cache($data);
     } catch {
         die "Failed to correlate datasets : $_";
     };
+
+    $cache->set_correlate_cache({
+        filter      => $data->{filter},
+        correlation => $correlation,
+    });
 
     return $correlation;
 
