@@ -77,11 +77,10 @@ sub get_bb_retention_correlation_data {
     my @bullbreese = ();
     my @retention  = ();
 
-
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        last unless $peptide;
+        last unless defined $peptide;
 
         push @bullbreese, $peptide->{bullbreese};
         push @retention, $peptide->{hodges_prediction};
@@ -103,6 +102,8 @@ sub get_peptide_retention_correlation_data {
 
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
+
+        last unless defined $peptide;
 
         push @peptide_lengths, length( $peptide->{peptide} );
         push @retention, $peptide->{hodges_prediction};
@@ -150,6 +151,8 @@ sub _peptide_length_filter {
 
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
+
+        last unless defined $peptide;
 
         push @bullbreese, $peptide->{bullbreese};
         # TODO: Support algorithm filters as well
