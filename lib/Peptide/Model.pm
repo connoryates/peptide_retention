@@ -78,7 +78,7 @@ sub get_bb_retention_correlation_data {
     my @retention  = ();
 
 
-    while (my $val = $rs->next) {
+    while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
         push @bullbreese, $peptide->{bullbreese};
@@ -119,14 +119,17 @@ sub get_peptide_retention_filtered_data {
     die "Argument filter must be a HashRef"
       unless ref($filter) and ref($filter) eq 'HASH';
 
-    # There's only one key, don't worry
-    my $filter_type = [keys %$filter]->[0];
+    my $filter_type = $filter->{type};
+    my $filter_data = $filter->{data};
 
     # TODO: support more than one filter type
-    die unless defined $filter_type or $filter_type !~ /peptide_length/;
+    die "Unknown or unsupported filter type"
+      unless defined $filter_type or $filter_type !~ /peptide_length/;
 
     # TODO: add filters to queries instead of filtering in memory
-    my $rs = $self->schema->uniprot_yeast->search({});
+    my $rs = $self->schema->uniprot_yeast->search({
+        order_by => { -asc => 'length' }
+    });
 
     my @bullbreese     = ();
     my @retention_info = ();
@@ -134,7 +137,7 @@ sub get_peptide_retention_filtered_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        if (length($peptide->{peptide}) == $filter->{peptide_length}) {
+        if (length($peptide) == $filter_data) {
             push @bullbreese, $peptide->{bullbreese};
             # TODO: Support algorithm filters
             push @retention_info, $peptide->{hodges_prediction};

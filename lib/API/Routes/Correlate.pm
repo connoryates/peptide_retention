@@ -25,7 +25,8 @@ post '/api/v1/correlate/bull_breese/peptide_length' => sub {
     my $correlation;
     try {
         $correlation = correlate_manager()->correlate_peptides({
-            peptide_length => $params->{peptide_length},
+            data   => $params->{peptide_length},
+            filter => 'peptide_length',
         });
     } catch {
         die "Failed to get correlation data : $_";

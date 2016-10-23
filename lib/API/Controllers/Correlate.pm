@@ -3,6 +3,7 @@ use Moose;
 
 use Peptide::Model;
 use Peptide::Correlation;
+use API::Cache;
 use Try::Tiny;
 
 has 'model' => (
@@ -19,22 +20,41 @@ has 'correlation' => (
     builder => '_build_correlation',
 );
 
+has 'cache' => (
+    is      => 'ro',
+    isa     => 'API::Cache::Correlate',
+    lazy    => 1,
+    builder => '_build_cache',
+);
+
 sub _build_model {
     return Peptide::Model->new;
 }
 
 sub _build_correlation {
-    # TODO: deprecate this
+    # TODO: deprecate this type
     return Peptide::Correlation->new(
         type => 'bullbreese_retention',
     );
 }
 
+sub _build_cache {
+    return API::Cache->new;
+}
+
 sub correlate_peptides {
     my ($self, $data) = @_;
 
-    die "Missing required arg : peptide_length"
-      unless defined $data->{peptide_length};
+    foreach my $required (qw(filter data)) {
+        die "Missing required arg : $required"
+          unless defined $data->{$required};
+    }
+
+    my $cache = $self->cache;
+
+    if ( my $cached = $cache->get_correlate_cache($data->{filter}) ) {
+        return $cached;
+    }
 
     my $filtered;
     try {
@@ -49,6 +69,7 @@ sub correlate_peptides {
     my $correlation;
     try {
         $correlation = $self->correlation->correlate($vector_1, $vector_2);
+        $cache->set_correlate_cache($data);
     } catch {
         die "Failed to correlate datasets : $_";
     };
