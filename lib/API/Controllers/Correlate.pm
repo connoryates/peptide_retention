@@ -53,7 +53,7 @@ sub correlate_peptides {
     my $cache = $self->cache;
 
     if ( my $cached = $cache->get_correlate_cache($data->{filter}) ) {
-        return $cached;
+        return $cached->{correlation};
     }
 
     my $filtered;

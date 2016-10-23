@@ -26,7 +26,7 @@ sub set_correlate_cache {
     my $status;
     try {
         my $filter = delete $data->{filter};
-        my $json   = encode_json({ correlation => $data->{correlation} });
+        my $json   = encode_json({ correlation => "$data->{correlation}" });
         $status    = $chi->set($filter, $json, EXPIRATION_TIME);
     } catch {
         $status = undef;
