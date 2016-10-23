@@ -52,3 +52,13 @@ sub _build_peptide {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+API::Cache
+
+Class for handling caching in the API
+
+Providers attributes and handles for subclasses
+
+=cut
