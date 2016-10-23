@@ -24,8 +24,8 @@ Build the app dependencies with:
 $ ./bin/build-app
 ```
 
-*Make sure you do not run this as root!* But as a user with ```sudo``` access. This will install and build ```perlbrew```
-and call the command: ```cpanm --installdeps``` which reads all of the Perl dependencies listed in the ```cpanfile``` and builds them.
+*Make sure you do not run this as root!* But as a user with ```sudo``` access. This will install ```perlbrew```
+and call the command: ```cpanm -nlv --installdeps .``` which reads all of the Perl dependencies listed in the ```cpanfile``` and builds them.
 
 Add this line to your ```~/.bash_profile```:
 
