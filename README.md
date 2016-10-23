@@ -38,8 +38,8 @@ Open your Postgres instance and run the commands in ```db/schema.sql```.
 Ensure all of the tests pass:
 
 ```
-$ prove -lv xt/
-$ prove -lv t/
+$ PLACK_ENV=development prove -lv xt/
+$ PLACK_ENV=development prove -lv t/
 ```
 
 ### Seeding the database
@@ -51,7 +51,7 @@ Place your seed data file in ```peptide_retention/data/seed/$your_file```
 Run the script:
 
 ```
-$ perl dev-bin/seed.pl --file '$file_name'
+$ PLACK_ENV=development perl dev-bin/seed.pl --file '$file_name'
 ```
 
 ### Web Server
