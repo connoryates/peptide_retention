@@ -1,6 +1,7 @@
 package API::Controllers::Peptides;
 use Moose;
 
+use Peptide::Util;
 use Peptide::Model;
 use API::Cache;
 use Try::Tiny;
@@ -19,12 +20,23 @@ has 'cache' => (
     builder => '_build_cache',
 );
 
+has 'util' => (
+    is      => 'ro',
+    isa     => 'Peptide::Util',
+    lazy    => 1,
+    builder => '_build_util',
+);
+
 sub _build_model {
     return Peptide::Model->new;
 }
 
 sub _build_cache {
     return API::Cache->new;
+}
+
+sub _build_util {
+    return Peptide::Util->new;
 }
 
 sub retention_info {
@@ -56,7 +68,25 @@ sub retention_info {
 sub add_retention_info {
     my ($self, $info) = @_;
 
-    # TODO check cache for peptide, and then recache if $info method is new
+
+#    my $peptide = $info->{peptide};
+#    my $cache   = $self->cache;
+
+#    if ($cache->is_cached($peptide)) {
+#        my $cached    = $cache->get_peptide_cache($peptide);
+
+        # Order matters! Left-precedent
+#        my $new_cache = $self->util->hash_merge(
+#            {
+#                prediciton_algorithm => $info->{prediciton_algorithm},
+#                retention_info       => $info->{retention_info},
+#                peptide              => $peptide,
+#            },
+#            $cached,
+#        );
+#
+#        $cache->set_peptide_cache($new_cache);
+#    }
 
     return $self->model->add_retention_info($info);
 

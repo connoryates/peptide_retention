@@ -8,6 +8,12 @@ use_ok 'API::Controllers::Peptides';
 
 my $controller = API::Controllers::Peptides->new;
 
-can_ok($controller, qw(retention_info add_retention_info));
+isa_ok($controller, 'API::Controllers::Peptides');
+
+subtest 'Checking methods' => sub {
+    my @methods = qw(retention_info add_retention_info);
+
+    can_ok($controller, @methods);
+};
 
 done_testing();
