@@ -81,6 +81,8 @@ sub get_bb_retention_correlation_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
+        last unless $peptide;
+
         push @bullbreese, $peptide->{bullbreese};
         push @retention, $peptide->{hodges_prediction};
     }
@@ -126,15 +128,22 @@ sub get_peptide_retention_filtered_data {
     die "Unknown or unsupported filter type"
       unless defined $filter_type or $filter_type !~ /peptide_length/;
 
-    # TODO: add filters to queries instead of filtering in memory
-    my $rs = $self->schema->uniprot_yeast->search(
-        {},
-        {
-            order_by => {
-                -desc => 'length'
-            },
-        },
-    );
+    my $method = '_' . $filter_type . '_filter';
+
+    my ($bullbreese, $retention_info) = $self->$method($filter_data);
+
+    return +{
+        retention_info => $retention_info,
+        bullbreese     => $bullbreese,
+    };
+}
+
+sub _peptide_length_filter {
+    my ($self, $peptide_filter_length) = @_;
+
+    my $rs = $self->schema->uniprot_yeast->search({
+        length => $peptide_filter_length,
+    });
 
     my @bullbreese     = ();
     my @retention_info = ();
@@ -142,17 +151,12 @@ sub get_peptide_retention_filtered_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        if (length($peptide->{peptide}) == $filter_data) {
-            push @bullbreese, $peptide->{bullbreese};
-            # TODO: Support algorithm filters
-            push @retention_info, $peptide->{hodges_prediction};
-        }
+        push @bullbreese, $peptide->{bullbreese};
+        # TODO: Support algorithm filters as well
+        push @retention_info, $peptide->{hodges_prediction};
     }
 
-    return +{
-        retention_info => \@retention_info,
-        bullbreese     => \@bullbreese,
-    };
+    return (\@bullbreese, \@retention_info);
 }
 
 sub get_bar_chart_peptide_data {

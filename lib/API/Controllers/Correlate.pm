@@ -73,13 +73,16 @@ sub correlate_peptides {
         die "Failed to correlate datasets : $_";
     };
 
-    $cache->set_correlate_cache({
-        filter      => $data->{filter},
-        correlation => $correlation,
-    });
+    if ($correlation ne 'n/a') {
+        $cache->set_correlate_cache({
+           filter      => $data->{filter},
+           correlation => $correlation,
+        });
 
-    return $correlation;
+        return $correlation;
+    }
 
+    return "No data found";
 }
 
 __PACKAGE__->meta->make_immutable;
