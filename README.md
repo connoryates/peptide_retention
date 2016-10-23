@@ -4,6 +4,8 @@ Hello! This doc contains instructions for setting up the API.
 
 For information about what the API does and how to use it, please refer to the [wiki](https://github.com/connoryates/peptide_retention/wiki/Overview)
 
+If you want to contribute, make sure you read ```CONTRIBUTORS.md``` before commiting
+
 ### Requirements:
 
 - perlbrew with Perl v5.22
