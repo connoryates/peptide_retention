@@ -43,9 +43,6 @@ sub correlate_peptides {
         die "Failed to get correlation data : $_";
     };
 
-    use Data::Dumper;
-    print Dumper $filtered;
- 
     my $vector_1   = $filtered->{bullbreese};
     my $vector_2   = $filtered->{retention_info};
 
