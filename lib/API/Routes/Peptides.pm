@@ -40,9 +40,11 @@ post '/api/v1/retention/peptide/add' => sub {
 
     send_error("Unauthorized", 401) unless defined $authorized;
 
-    foreach my $required (qw(peptide retention_time method)) {
+    foreach my $required (qw(peptide retention_time prediciton_algorithm)) {
         send_error("Missing param : $required", 500) unless defined $params->{$required};
     }
+
+    $params->{retention_info}->{prediction_info} = $params->{prediciton_algorithm};
 
     my $status;
     try {
@@ -85,9 +87,9 @@ NOTE: Need to adjust database schema to accept method param
 Accepts parameters:
 
     {
-        peptide        => $peptide,
-        retention_time => $retention_time, 
-        method         => $method
+        peptide              => $peptide,
+        retention_time       => $retention_time, 
+        prediciton_algorithm => $prediciton_algorithm,
     }
 
 Returns:
