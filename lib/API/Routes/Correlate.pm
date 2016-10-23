@@ -41,7 +41,7 @@ true;
 
 =pod
 
-post /api/v1/retention/correlate
+post /api/v1/correlate/bull_breese/peptide_length
 
 REST route to handle correlation data. Accepts a parameter "peptide_length" that can either
 be a the length of a peptide or "all" which will correlate peptide of all lengths
