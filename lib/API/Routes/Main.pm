@@ -7,3 +7,13 @@ any '/healthcheck' => sub {
 };
 
 true;
+
+=pod
+
+=head1 any /healthcheck
+
+Healthcheck for deployment/build purposes
+
+=cut
+
+1;

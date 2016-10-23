@@ -20,7 +20,8 @@ get '/dashboard/chart/bar/:peptide' => sub {
         send_error("Missing required param : $required") unless defined $required;
     }
 
-    template 'bar_chart';
+    return;
+#    template 'test';
 };
 
 true;

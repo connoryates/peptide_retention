@@ -14,3 +14,13 @@ register bar_chart_manager => sub {
 register_plugin;
 
 true;
+
+=pod
+
+=head1 bar_chart_manager
+
+Plugin for using Chart controller in Route
+
+=cut
+
+1;

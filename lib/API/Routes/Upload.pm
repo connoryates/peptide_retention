@@ -27,5 +27,12 @@ post '/api/v1/upload' => sub {
      return $status;
 };
 
-
 true;
+
+=pod
+
+=head1 post /api/v1/upload
+
+REST route for upload files via HTTP. In development
+
+=cut

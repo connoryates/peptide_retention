@@ -21,3 +21,15 @@ sub bar_chart_data {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+Dashboard::Controller::Chart
+
+Class for handling calls to Model from Route
+
+=head1 bar_chart_data
+
+Return bar chart data for a given peptide input
+
+=cut
