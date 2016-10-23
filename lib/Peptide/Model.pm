@@ -48,7 +48,7 @@ sub _get_retention_info {
         warn "Could not add $peptide to database : $_";
     };
 
-    $info->{retention_info}->length} = length($peptide);
+    $info->{retention_info}->{length} = length($peptide);
 
     return $info;
 }
