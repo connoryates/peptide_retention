@@ -12,3 +12,13 @@ register peptide_manager => sub {
 register_plugin;
 
 true;
+
+=pod
+
+=head1 peptide_manger
+
+Plugin to handle API::Controllers::Peptides in Route
+
+=cut
+
+1;

@@ -39,8 +39,10 @@ sub set_peptide_cache {
 sub get_peptide_cache {
     my ($self, $peptide) = @_;
 
-    die "Missing required arg : $required"
+    die "Missing required arg : peptide"
       unless defined $peptide;
+
+    my $chi = $self->chi;
 
     my $data;
     try {

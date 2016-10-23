@@ -40,7 +40,7 @@ post '/api/v1/retention/peptide/add' => sub {
 
     send_error("Unauthorized", 401) unless defined $authorized;
 
-    foreach my $required (qw(peptide retention_time)) {
+    foreach my $required (qw(peptide retention_time method)) {
         send_error("Missing param : $required", 500) unless defined $params->{$required};
     }
 
@@ -49,10 +49,51 @@ post '/api/v1/retention/peptide/add' => sub {
         my $peptide_manager = peptide_manager();
            $status = $peptide_manager->add_retention_info($params);
     } catch {
-        send_error("Something went wrong", 500);
+        send_error("Failed to add retention info : $_", 500);
     };
 
     return res 200, $status;
 };
 
 true;
+
+=pod
+
+=head1
+
+post /api/v1/retention/peptide/info
+
+Accepts parameters:
+
+    { peptide => $peptide }
+
+Returns:
+
+     {
+         "retention_info" : {
+            "peptide" : "K",
+            "predicted_retention" : -2.1,
+            "prediction_algorithm" : "hodges",
+            "bullbreese" : 0.46
+         }
+     }
+
+=head2 post /api/v1/retention/peptide/add
+
+NOTE: Need to adjust database schema to accept method param
+
+Accepts parameters:
+
+    {
+        peptide        => $peptide,
+        retention_time => $retention_time, 
+        method         => $method
+    }
+
+Returns:
+
+    HTTP Status
+
+=cut
+
+1;

@@ -14,7 +14,7 @@ isa_ok($cache, 'API::Cache');
 subtest 'Checking methods' => sub {
     my @methods = qw(get_peptide_cache set_peptide_cache);
 
-    can_ok($cache. @methods);
+    can_ok($cache, @methods);
 };
 
 done_testing();

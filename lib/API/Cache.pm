@@ -28,7 +28,7 @@ has 'peptide' => (
     isa     => 'API::Cache::Peptide',
     lazy    => 1,
     builder => '_build_peptide',
-    handles => [qw(get_cached_peptide set_peptide_cache)],
+    handles => [qw(get_peptide_cache set_peptide_cache)],
 );
 
 # NOT FOR PUBLIC USE - namespace is set by subclasses!
