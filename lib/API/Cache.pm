@@ -4,6 +4,7 @@ use Moose;
 use CHI;
 use Peptide::Config;
 use API::Cache::Peptide;
+use API::Cache::Correlate;
 
 our $CHI;
 
@@ -31,6 +32,14 @@ has 'peptide' => (
     handles => [qw(get_peptide_cache set_peptide_cache)],
 );
 
+has 'correlate' => (
+    is      => 'ro',
+    isa     => 'API::Cache::Correlate',
+    lazy    => 1,
+    builder => '_build_correlate',
+    handles => [qw(get_correlate_cache set_correlate_cache)],
+);
+
 # NOT FOR PUBLIC USE - namespace is set by subclasses!
 sub _build_chi {
     my $self   = shift;
@@ -49,6 +58,10 @@ sub _build_config {
 
 sub _build_peptide {
     return API::Cache::Peptide->new;
+}
+
+sub _build_correlate {
+    return API::Cache::Correlate->new;
 }
 
 __PACKAGE__->meta->make_immutable;
