@@ -33,7 +33,7 @@ around BUILDARGS => sub {
 
 sub connect_args {
      my $self = shift;
-     my $pg = $self->config->{database}->{pg};
+     my $pg   = $self->config->{database}->{pg};
 
      return ($pg->{dsn}, $pg->{user}, $pg->{password});
 }

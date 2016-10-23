@@ -8,12 +8,9 @@ our $CONFIG;
 
 sub config {
     my $self   = shift;
-
     my $root   = $self->_root;
 
-    warn "ROOT => $root";
-
-    my $file   = "/home/pi/peptide_retention/environments/development.yml";
+    my $file   = $root . '/' . $ENV{PLACK_ENV} . '.yml';
     $CONFIG  ||= LoadFile($file);
 
     return $CONFIG;
@@ -21,8 +18,7 @@ sub config {
 
 sub _root {
     my $self = shift;
-
-    my $root = "$RealBin/../../peptide_retention/environments";
+    my $root = "$RealBin/../environments";
 
     return $root;
 }
@@ -37,7 +33,10 @@ Class for retrieving configuration details
 
 =head1 config
 
-Reads the config file for environment set by PLACK_ENV when starting the app
+Reads the config file for environment set by PLACK_ENV when starting the app.
+
+This method assumes you started the app from the bin/ dir. A more elegant
+solution is needed for this
 
 =cut
 
