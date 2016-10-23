@@ -60,8 +60,6 @@ sub correlate_peptides {
     my $filtered;
     try {
         $filtered = $self->model->get_peptide_retention_filtered_data($data);
-        use Data::Dumper;
-        print Dumper $filtered;
     } catch {
         die "Failed to get correlation data : $_";
     };
