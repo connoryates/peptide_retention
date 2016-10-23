@@ -2,7 +2,6 @@ package Peptide::Config;
 use Moose;
 
 use YAML::XS 'LoadFile';
-use FindBin qw/$RealBin/;
 
 our $CONFIG;
 
@@ -18,7 +17,7 @@ sub config {
 
 sub _root {
     my $self = shift;
-    my $root = "$RealBin/../environments";
+    my $root = "/home/$ENV{USER}/peptide_retention/environments";
 
     return $root;
 }

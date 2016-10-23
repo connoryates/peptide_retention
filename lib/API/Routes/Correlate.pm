@@ -13,7 +13,7 @@ hook 'before' => sub {
     var authorized => 1;
 };
 
-post '/api/v1/retention/correlate' => sub {
+post '/api/v1/correlate/bull_breese/peptide_length' => sub {
     my $params = params || {};
 
     my $auth   = var 'authorized';
@@ -22,12 +22,14 @@ post '/api/v1/retention/correlate' => sub {
     send_error("Missing required arg : peptide_length" => 400)
       unless defined $params->{peptide_length};
 
+    use Data::Dumper;
     my $correlation;
     try {
         $correlation = correlate_manager()->correlate_peptides({
             peptide_length => $params->{peptide_length},
         });
     } catch {
+        print Dumper $_;
         die "Failed to get correlation data : $_";
     };
 

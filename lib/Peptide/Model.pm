@@ -116,8 +116,6 @@ sub get_peptide_retention_correlation_data {
 sub get_peptide_retention_filtered_data {
     my ($self, $filter) = @_;
 
-    warn "MODEL";
-
     die "Argument filter must be a HashRef"
       unless ref($filter) and ref($filter) eq 'HASH';
 
