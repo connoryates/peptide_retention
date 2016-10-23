@@ -1,13 +1,14 @@
-## Peptide Retention
+## Peptide Retention API
 
-This doc contains instructions for setting up the API.
-For information about what the API does and how to use, please refer to the wiki
+Hello! This doc contains instructions for setting up the API.
 
-Requirements:
+For information about what the API does and how to use, please refer to the [wiki](https://github.com/connoryates/peptide_retention/wiki/Overview)
+
+### Requirements:
 
 - perlbrew with Perl v5.22
 
-- Debian
+- Debian-based Linux
 
 - Postgres 9.6
 
