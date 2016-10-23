@@ -33,6 +33,3 @@ perlbrew install cpanm
 echo "Installing perl modules"
 cpanm -nlv --installdeps .
 
-echo "Running tests"
-prove -rlv xt/
-prove -rlv t/
