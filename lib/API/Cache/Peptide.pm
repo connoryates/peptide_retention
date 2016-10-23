@@ -21,12 +21,12 @@ sub set_peptide_cache {
     my $chi = $self->chi;
 
     # Don't attempt to cache existing keys
-    return if $chi->is_valid($data->{peptide});
+    return 1 if $chi->is_valid($data->{peptide});
 
     my $status;
     try {
         my $peptide = delete $data->{peptide};
-        my $json    = encode_json($data);
+        my $json    = encode_json($data->{retention_info});
         $status     = $chi->set($peptide, $json, EXPIRATION_TIME);
     } catch {
         $status = undef;
@@ -56,7 +56,12 @@ sub get_peptide_cache {
     };
 
     return $data;
+}
 
+sub is_cached {
+    my ($self, $peptide) = @_;
+
+    return $self->chi->is_valid($peptide);
 }
 
 __PACKAGE__->meta->make_immutable;
