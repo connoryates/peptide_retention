@@ -10,3 +10,15 @@ register upload_manager => sub {
 };
 
 register_plugin;
+
+true;
+
+=pod
+
+upload_manager
+
+Plugin for using API::Controllers::Upload in Route
+
+=cut
+
+1;

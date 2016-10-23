@@ -20,13 +20,17 @@ get '/dashboard/chart/bar/:peptide' => sub {
         send_error("Missing required param : $required") unless defined $required;
     }
 
-    return;
-#     template 'bar_chart';
-#    template 'bar_chart', +{
-#        algorithm  => $data->{algorithm},
-#        bullbreese => $data->{bullbreese},
-#        retention  => $data->{retention},
-#    };
+    template 'bar_chart';
 };
 
 true;
+
+=pod
+
+=head1 get /dashboard/chart/bar/:peptide
+
+Future route for charting peptide data
+
+=cut
+
+1;

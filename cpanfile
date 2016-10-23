@@ -21,3 +21,4 @@ requires 'DBIx::Class::Schema', 0;
 requires 'Statistics::Basic::Correlation', 0;
 requires 'YAML::XS', 0;
 requires 'Starman', 0;
+requires 'Test::Pod', 0;

@@ -10,3 +10,13 @@ register key_manager => sub {
 };
 
 register_plugin;
+
+true;
+
+=pod
+
+=head1 key_manager
+
+Plugin for handling any API key authorization. Future feature
+
+=cut
