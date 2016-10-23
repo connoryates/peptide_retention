@@ -22,3 +22,4 @@ requires 'Statistics::Basic::Correlation', 0;
 requires 'YAML::XS', 0;
 requires 'Starman', 0;
 requires 'Test::Pod', 0;
+requires 'Hash::Merge', 0;
