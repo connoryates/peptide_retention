@@ -118,7 +118,7 @@ not:
 ```perl
 eval { $self->do_something };
 
-if (@$) {
+if ($@) {
     die "Something went wrong: $_";
 }
 ```
