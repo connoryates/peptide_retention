@@ -42,3 +42,24 @@ sub correlate_retention_datasets {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+Peptide::Correlation
+
+my $correlation = Peptide::Correlation->new(
+    type => $type
+);
+
+$type can be:
+    - bullbreese_retention
+    - peptide_length_retention
+
+=head1 correlate_retention_datasets
+
+Reads values from based on attribute type from database and uses the corr method from Statistics::Basic
+to find correlation.
+
+=cut
+
+1;

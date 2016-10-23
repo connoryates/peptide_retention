@@ -128,3 +128,38 @@ sub validate_api_key {
 }
 
 __PACKAGE__->meta->make_immutable;
+
+=pod
+
+Peptide::Model
+
+Class to handle database queries
+
+=head1 get_retention_info
+
+Queries the database for the given peptide input
+
+=head2 add_retention_info
+
+Adds the given peptide input and retention info to the database
+
+=head3 get_bb_retention_correlation_data 
+
+Queries the database for all peptides and returns a HashRef with
+an ArrayRef of all Bull and Breese values and an ArrayRef of all
+retention info
+
+=head4 get_peptide_length_retention_correlation_data 
+
+Queries the database for all peptides and returns a HashRef with
+an ArrayRef of all peptide lengths and an ArrayRef of all retention
+info
+
+CAUTION: these methods hold all database values in memory,
+caching solution coming
+
+=head5 get_bar_chart_peptide_data
+
+Future front-end query for displaying bar chart data in D3.js
+
+=cut
