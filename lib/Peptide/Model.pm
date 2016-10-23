@@ -48,6 +48,8 @@ sub _get_retention_info {
         warn "Could not add $peptide to database : $_";
     };
 
+    $info->{retention_info}->length} = length($peptide);
+
     return $info;
 }
 
@@ -64,6 +66,7 @@ sub add_retention_info {
         $algorithm => $ret->{predicted_retention},
         bullbreese => $ret->{bullbreese},
         peptide    => $ret->{peptide},
+        length     => length( $ret->{peptide} ),
     };
 
     return $self->schema->uniprot_yeast->create($insert);
