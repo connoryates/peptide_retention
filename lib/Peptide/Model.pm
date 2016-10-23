@@ -94,12 +94,12 @@ sub get_bb_retention_correlation_data {
 sub get_peptide_retention_correlation_data {
     my $self = shift;
 
-    my $rs = $self->schema->uniprot_yeast->search({});
+    my $rs   = $self->schema->uniprot_yeast->search({});
 
     my @peptide_lengths = ();
-    my @retention  = ();
+    my @retention       = ();
 
-    while (my $val = $rs->next) {
+    while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
         push @peptide_lengths, length( $peptide->{peptide} );
@@ -111,6 +111,42 @@ sub get_peptide_retention_correlation_data {
         retention       => \@retention
     };
 
+}
+
+sub get_peptide_retention_filtered_data {
+    my ($self, $filter) = @_;
+
+    warn "MODEL";
+
+    die "Argument filter must be a HashRef"
+      unless ref($filter) and ref($filter) eq 'HASH';
+
+    # There's only one key, don't worry
+    my $filter_type = [keys %$filter]->[0];
+
+    # TODO: support more than one filter type
+    die unless defined $filter_type or $filter_type !~ /peptide_length/;
+
+    # TODO: add filters to queries instead of filtering in memory
+    my $rs = $self->schema->uniprot_yeast->search({});
+
+    my @bullbreese     = ();
+    my @retention_info = ();
+
+    while (my $val  = $rs->next) {
+        my $peptide = $val->{_column_data};
+
+        if (length($peptide->{peptide}) == $filter->{peptide_length}) {
+            push @bullbreese, $peptide->{bullbreese};
+            # TODO: Support algorithm filters
+            push @retention_info, $peptide->{hodges_prediction};
+        }
+    }
+
+    return +{
+        retention_info => \@retention_info,
+        bullbreese     => \@bullbreese,
+    };
 }
 
 sub get_bar_chart_peptide_data {
@@ -161,5 +197,9 @@ caching solution coming
 =head5 get_bar_chart_peptide_data
 
 Future front-end query for displaying bar chart data in D3.js
+
+=head6 get_peptide_retention_filtered_data
+
+Return a correlation data structure with specified filters
 
 =cut

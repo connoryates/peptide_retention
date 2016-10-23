@@ -42,8 +42,8 @@ sub retention_info {
 
         if (defined $ret_info) {
             $cache->set_peptide_cache({
-                peptide       => $peptide,
-                retention_inf => $ret_info,
+                peptide        => $peptide,
+                retention_info => $ret_info,
             });
         }
     } catch {

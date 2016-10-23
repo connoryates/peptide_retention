@@ -27,7 +27,7 @@ post '/api/v1/retention/peptide/info' => sub {
         my $peptide_manager = peptide_manager();
            $data = $peptide_manager->retention_info($params->{peptide});
     } catch {
-        send_error("Something went wrong", 500);
+        send_error("Failed to get retention info : $_" => 500);
     };
 
     return res 200, $data;

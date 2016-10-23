@@ -42,12 +42,14 @@ sub get_peptide_cache {
     die "Missing required arg : peptide"
       unless defined $peptide;
 
-    my $chi = $self->chi;
+    my $chi   = $self->chi;
+    my $json  = $self->chi->get($peptide);
+
+    return undef unless defined $json;
 
     my $data;
     try {
-        my $json = $self->chi->get($peptide);
-        $data    = decode_json($json);
+        $data = decode_json($json);
     } catch {
         $data = undef;
         warn "Failed to get $peptide from cache : $_";

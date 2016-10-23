@@ -27,10 +27,20 @@ use API::Routes::Main;
 
 =head4
 
+REST route for returning correlation data via HTTP requests
+
+=cut
+
+use API::Routes::Correlate;
+
+
+=head5
+
 Future routes for charting data
 
 =cut
 
 use Dashboard::Routes::Chart;
+
 
 true;

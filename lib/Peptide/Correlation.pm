@@ -36,9 +36,15 @@ sub correlate_retention_datasets {
     my $vector_2 = delete $data->{retention}; # Plz change
     my $vector_1 = $data->{ [ keys %$data]->[0] };
 
-    my $corr = correlation( $vector_1, $vector_2 );
+    my $corr = $self->correlate($vector_1, $vector_2);
 
     return defined $corr ? $corr : undef;
+}
+
+sub correlate {
+    my ($self, $vector_1, $vector_2) = @_;
+
+    return correlation( $vector_1, $vector_2 );
 }
 
 __PACKAGE__->meta->make_immutable;
