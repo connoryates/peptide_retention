@@ -8,12 +8,27 @@ use_ok 'Peptide::Retention';
 
 my $ret = Peptide::Retention->new;
 
-can_ok($ret, qw(tryptic_vals));
+isa_ok($ret, 'Peptide::Retention');
 
-my $resp = $ret->tryptic_vals('R');
+subtest 'Checking methods' => sub {
+    my @methods = qw(tryptic_vals );
 
-use Data::Dumper;
+    can_ok($ret, @methods);
+};
 
-warn "RESP => " . Dumper $resp;
+subtest 'Testing tryptic_vals' => sub {
+    my $vals = $ret->tryptic_vals('R');
+
+    my $expect = {
+        retention_info => {
+           bullbreese           => '0.69',
+           peptide              => 'R',
+           prediction_algorithm => 'hodges',
+           predicted_retention  => '-0.6'
+        }
+    };
+
+    is_deeply($vals, $expect, "tryptic_vals successful");
+};
 
 done_testing();
