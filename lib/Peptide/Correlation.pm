@@ -25,7 +25,8 @@ sub correlate_retention_datasets {
     my $data;
     if ($type eq 'bullbreese_retention') {
         $data = $self->model->get_bb_retention_correlation_data;
-    } elsif ($type eq 'peptide_length_retention') {
+    }
+    elsif ($type eq 'peptide_length_retention') {
         $data = $self->model->get_peptide_retention_correlation_data;
     } else {
         die "Not a valid type. Valid types are:\n\tbullbreese_retention\n\tpeptide_length_retention\n\n";
