@@ -68,28 +68,29 @@ sub retention_info {
 sub add_retention_info {
     my ($self, $info) = @_;
 
+    my $peptide    = $info->{peptide};
+    my $cache      = $self->cache;
 
-#    my $peptide = $info->{peptide};
-#    my $cache   = $self->cache;
-
-#    if ($cache->is_cached($peptide)) {
-#        my $cached    = $cache->get_peptide_cache($peptide);
+    if ($cache->is_cached($peptide)) {
+        my $cached = $cache->get_peptide_cache($peptide);
 
         # Order matters! Left-precedent
-#        my $new_cache = $self->util->hash_merge(
-#            {
-#                prediciton_algorithm => $info->{prediciton_algorithm},
-#                retention_info       => $info->{retention_info},
-#                peptide              => $peptide,
-#            },
-#            $cached,
-#        );
-#
-#        $cache->set_peptide_cache($new_cache);
-#    }
+        my $new_cache = $self->util->hash_merge(
+            {
+                prediciton_algorithm => $info->{prediciton_algorithm},
+                retention_info       => $info->{retention_info},
+                peptide              => $peptide,
+            },
+            $cached,
+        );
+
+        $cache->remove_key($peptide);
+        $cache->set_peptide_cache($new_cache);
+    } else {
+        $cache->set_peptide_cache($info);
+    }
 
     return $self->model->add_retention_info($info);
-
 }
 
 __PACKAGE__->meta->make_immutable;
@@ -107,6 +108,11 @@ Checks the cache for retention info first and returns it if it's found.
 If not, calls get_retention_info from Model
 
 =head2 add_retention_info
+
+Checks the cache to see if the peptide in question has been cached.
+It then merges the hash structure with a left precedet (the new data)
+and recaches. It then calls the model to add the retention info
+
 
 Calls Model to add retention info
 

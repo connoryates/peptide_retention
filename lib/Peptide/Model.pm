@@ -62,14 +62,14 @@ sub add_retention_info {
 
     my $ret = $info->{retention_info};
 
-    my $insert = {
+    my $payload = {
         $algorithm => $ret->{predicted_retention},
         bullbreese => $ret->{bullbreese},
         peptide    => $ret->{peptide},
         length     => length( $ret->{peptide} ),
     };
 
-    return $self->schema->uniprot_yeast->create($insert);
+    return $self->schema->uniprot_yeast->find_or_create($payload);
 }
 
 sub get_bb_retention_correlation_data {

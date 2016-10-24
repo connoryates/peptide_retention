@@ -64,6 +64,12 @@ sub is_cached {
     return $self->chi->is_valid($peptide);
 }
 
+sub remove_key {
+    my ($self, $key) = @_;
+
+    return $self->chi->remove($key);
+}
+
 __PACKAGE__->meta->make_immutable;
 
 =pod
