@@ -25,7 +25,7 @@ source ~/perl5/perlbrew/etc/bashrc
 echo "Installing perl-5.22.0"
 perlbrew install perl-5.22.0
 
-perlbrew use perl-5.22.0
+perlbrew switch perl-5.22.0
 
 echo "Installing cpanm with perlbrew"
 perlbrew install cpanm

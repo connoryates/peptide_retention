@@ -1,4 +1,9 @@
+requires 'Parse::CPAN::Meta', 0;
+requires 'JSON::PP', 0;
+requires 'Plack::Builder', 0;
+requires 'HTTP::Entity::Parser', 0;
 requires 'Dancer', 0;
+requires 'Dancer::Plugin::Res', 0;
 requires 'DBI', 0;
 requires 'Mesoderm', 0;
 requires 'DBD::Pg', 0;
