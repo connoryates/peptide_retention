@@ -46,14 +46,16 @@ $ PLACK_ENV=development prove -lv t/
 
 ### Seeding the database
 
-(NOT MADE YET)
+Unzip the files:
 
-Place your seed data file in ```peptide_retention/data/seed/$your_file```
+```
+$ tar -xvzf data/seed/seed_data.tar.gz 
+```
 
 Run the script:
 
 ```
-$ PLACK_ENV=development perl dev-bin/seed.pl --file '$file_name'
+$ PLACK_ENV=development perl dev-bin/seed.pl
 ```
 
 ### Web Server
