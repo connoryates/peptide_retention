@@ -65,10 +65,10 @@ sub hodges_predict {
 
     return +{
         retention_info => {
-            peptide              => $peptide,
-            predicted_retention  => $ret,
-            bullbreese           => $bb_vals,
-            prediction_algorithm => 'hodges',
+            peptide            => $peptide,
+            hodges_prediction  => $ret,
+            bullbreese         => $bb_vals,
+            length             => length($peptide),
         },
     };
 }

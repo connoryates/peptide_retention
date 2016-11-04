@@ -30,11 +30,11 @@ sub _build_retention {
 sub get_retention_info {
     my ($self, $peptide) = @_;
 
-    my $data = $self->schema->uniprot_yeast->search({ peptide => $peptide });
+    my $data = $self->schema->uniprot_yeast->find({ peptide => $peptide });
 
     return $self->_get_retention_info($peptide) unless defined $data->{_column_data};
 
-    return $data->{_columns};
+    return $data->{_column_data};
 }
 
 sub _get_retention_info {
@@ -69,7 +69,14 @@ sub add_retention_info {
         length     => length( $ret->{peptide} ),
     };
 
-    return $self->schema->uniprot_yeast->find_or_create($payload);
+    my $status;
+    try {
+        $status = $self->schema->uniprot_yeast->find_or_create($payload);
+    } catch {
+        warn "Could not add payload to database : $_";
+    };
+
+    return $status;
 }
 
 sub get_bb_retention_correlation_data {

@@ -26,27 +26,27 @@ subtest 'Checking methods' => sub {
 subtest 'Testing get_retention_info' => sub {
     my $expect = {
         retention_info => {
-            prediction_algorithm => 'hodges',
-            length               => 1,
-            predicted_retention  => '-2.1',
-            bullbreese           => '0.46',
-            peptide              => 'K'
+            length            => 1,
+            hodges_prediction => '-2.1',
+            bullbreese        => '0.46',
+            peptide           => 'K'
         }
     };
 
     my $ret_info = $model->get_retention_info('K');
 
-    is_deeply($ret_info, $expect, "get_retention_info successful");
+    delete $ret_info->{id};
+
+    is_deeply($ret_info, $expect->{retention_info}, "get_retention_info successful");
 };
 
 subtest 'Testing _get_retention_info' => sub {
     my $expect = {
         retention_info => {
-            prediction_algorithm => 'hodges',
-            length               => 1,
-            predicted_retention  => '-2.1',
-            bullbreese           => '0.46',
-            peptide              => 'K'
+            length            => 1,
+            hodges_prediction => '-2.1',
+            bullbreese        => '0.46',
+            peptide           => 'K'
         }
     };
 
