@@ -21,10 +21,10 @@ subtest 'Testing tryptic_vals' => sub {
 
     my $expect = {
         retention_info => {
-           bullbreese           => '0.69',
-           peptide              => 'R',
-           prediction_algorithm => 'hodges',
-           predicted_retention  => '-0.6'
+           bullbreese        => '0.69',
+           peptide           => 'R',
+           hodges_prediction => '-0.6',
+           length            => 1,
         }
     };
 

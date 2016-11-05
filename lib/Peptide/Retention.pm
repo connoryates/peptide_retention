@@ -1,9 +1,12 @@
 package Peptide::Retention;
 use Moose;
 
+use API::X;
+use Try::Tiny;
+use Log::Any qw/$log/;
+use List::Util qw(sum);
 use InSilicoSpectro::InSilico::RetentionTimer;
 use InSilicoSpectro::InSilico::RetentionTimer::Hodges;
-use List::Util qw(sum);
 
 my %BB_VALUES = (
     A => 0.610,
@@ -42,9 +45,16 @@ sub _build_hodges {
 sub tryptic {
     my ($self, $seq) = @_;
 
+    if (not defined $seq) {
+        API::X->throw({
+            message => "Missing required param : seq",
+        });
+    }    
+
     $seq =~ s/\n//;
     my @tryptic = split(/(?!P)(?<=[RK])/, $seq);
-    warn "found " . @tryptic . " tryptic cleavage patterns\n";
+
+    $log->warn("found " . @tryptic . " tryptic cleavage patterns");
 
     return \@tryptic;
 }
@@ -52,8 +62,23 @@ sub tryptic {
 sub tryptic_vals {
     my ($self, $peptide) = @_;
 
-    my $bb_vals      = $self->assign_bb_values($peptide);
-    my $peptide_info = $self->hodges_predict($peptide, $bb_vals);
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
+
+    my $peptide_info;
+    try {
+        my $bb_vals      = $self->assign_bb_values($peptide);
+           $peptide_info = $self->hodges_predict($peptide, $bb_vals);
+    } catch {
+        $log->warn("Cannot determine peptide info : $_");
+
+        API::X->throw({
+            message => "Cannot determine peptide info : $_",
+        });
+    };
 
     return $peptide_info;
 }
@@ -61,7 +86,26 @@ sub tryptic_vals {
 sub hodges_predict {
     my ($self, $peptide, $bb_vals) = @_;
 
-    my $ret = $self->hodges->predict(peptide => $peptide);
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
+
+    if (not defined $bb_vals and defined $peptide) {
+        $bb_vals = $self->assign_bb_values($peptide);
+    }
+
+    my $ret;
+    try {
+        $ret = $self->hodges->predict(peptide => $peptide);
+    } catch {
+        $log->warn("Failed to get hodges prediction : $_");
+
+        API::X->throw({
+            message => "Failed to get hodges prediction : $_",
+        });
+    };
 
     return +{
         retention_info => {
@@ -76,9 +120,19 @@ sub hodges_predict {
 sub assign_bb_values {
     my ($self, $seq) = @_;
 
+    if (not defined $seq) {
+        API::X->throw({
+            message => "Missing required param : seq"
+        });
+    }
+
     my @bb_vals = grep { $_ } map { $BB_VALUES{$_} } split '', $seq;
 
-    return unless @bb_vals;
+    if (not @bb_vals or @bb_vals == 0) {
+        API::X->throw({
+            message => "Cannot determine bullbreese values for $seq",
+        });
+    }
 
     my $bb_vals = sum(@bb_vals);
 
