@@ -5,6 +5,7 @@ use Peptide::Model;
 use Peptide::Correlation;
 use API::Cache;
 use Try::Tiny;
+use API::X;
 
 has 'model' => (
     is      => 'ro',
@@ -46,8 +47,9 @@ sub correlate_peptides {
     my ($self, $data) = @_;
 
     foreach my $required (qw(filter data)) {
-        die "Missing required arg : $required"
-          unless defined $data->{$required};
+        API::X->throw({
+            message =>  "Missing required arg : $required"
+        }) unless defined $data->{$required};
     }
 
     my $cache     = $self->cache;
@@ -61,7 +63,9 @@ sub correlate_peptides {
     try {
         $filtered = $self->model->get_peptide_retention_filtered_data($data);
     } catch {
-        die "Failed to get correlation data : $_";
+        API::X->throw({
+            message => "Failed to get correlation data : $_",
+        });
     };
 
     my $vector_1  = $filtered->{bullbreese};
