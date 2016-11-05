@@ -82,6 +82,37 @@ sub get_correlate_cache {
     return $data;
 }
 
+sub is_cached {
+    my ($self, $peptide) = @_;
+
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
+
+    return $self->chi->is_valid($peptide);
+}
+
+sub remove_key {
+    my ($self, $key) = @_;
+
+    if (not defined $key) {
+        API::X->throw({
+            message => "Missing required param : key",
+        });
+    }
+
+    my $status;
+    try {
+        $status = $self->chi->remove($key);
+    } catch {
+        $status = undef;
+        $log->warn("Failed to remove cache key : $_");
+    };
+
+    return $status;
+}
 __PACKAGE__->meta->make_immutable;
 
 =pod

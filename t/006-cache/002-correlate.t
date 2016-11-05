@@ -25,6 +25,8 @@ subtest 'Checking methods' => sub {
 };
 
 subtest 'Testing set_correlate_cache' => sub {
+    $cache->remove_key($filter) if $cache->is_cached($filter);
+
     my $status = $cache->set_correlate_cache($test_data);
 
     is(defined($status), 1, "set_correlate_cache succeeded");
@@ -34,6 +36,8 @@ subtest 'Testing get_correlate_cache' => sub {
     my $data = $cache->get_correlate_cache($filter);
 
     is_deeply($data, $test_data, "get_correlate_cache return correct data");
+
+    $cache->remove_key($filter);
 };
 
 done_testing();

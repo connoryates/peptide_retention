@@ -2,6 +2,8 @@ package API::Cache;
 use Moose;
 
 use CHI;
+use API::X;
+use Try::Tiny;
 use Peptide::Config;
 use API::Cache::Peptide;
 use API::Cache::Correlate;
@@ -43,7 +45,15 @@ has 'correlate' => (
 # NOT FOR PUBLIC USE - namespace is set by subclasses!
 sub _build_chi {
     my $self   = shift;
-    my $config = $self->config->{chi_config};
+
+    my $config;
+    try {
+        $config = $self->config->{chi_config};
+    } catch {
+        API::X->throw({
+            message => "Cannot find CHI config! : $_",
+        });
+    };
 
     $config->{namespace} = $self->namespace;
 

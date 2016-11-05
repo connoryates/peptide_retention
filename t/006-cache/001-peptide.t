@@ -11,8 +11,10 @@ my $cache = API::Cache::Peptide->new;
 isa_ok($cache, 'API::Cache::Peptide');
 isa_ok($cache, 'API::Cache');
 
+my $peptide = 'K';
+
 my $payload = {
-    peptide        => 'K',
+    peptide        => $peptide,
     retention_info => {
         hodges_prediction => '-1.4',
         bullbreese        => '0.460',
@@ -33,7 +35,7 @@ subtest 'Testing set_peptide_cache' => sub {
 };
 
 subtest 'Testing get_peptide_cache' => sub {
-    my $cached = $cache->get_peptide_cache($payload->{peptide});
+    my $cached = $cache->get_peptide_cache($peptide);
 
     is_deeply($cached, $payload->{retention_info}, "get_peptide_cache is successful");
 };
