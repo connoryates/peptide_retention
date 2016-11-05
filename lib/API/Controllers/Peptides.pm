@@ -5,6 +5,7 @@ use Peptide::Util;
 use Peptide::Model;
 use API::Cache;
 use Try::Tiny;
+use API::X;
 
 has 'model' => (
     is      => 'ro',
@@ -42,6 +43,18 @@ sub _build_util {
 sub retention_info {
     my ($self, $peptide) = @_;
 
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : `peptide`",
+        });
+    }
+
+    if (ref($peptide)) {
+        API::X->throw({
+            message => "Argument `peptide` must be a string",
+        });
+    }
+
     my $cache = $self->cache;
 
     if (my $cached = $cache->get_peptide_cache($peptide)) {
@@ -59,7 +72,9 @@ sub retention_info {
             });
         }
     } catch {
-        die "Failed to get retention info for $peptide : $_";
+        API::X->throw({
+            message => "Failed to get retention info for $peptide : $_",
+        });
     };
 
     return $ret_info;
@@ -67,6 +82,18 @@ sub retention_info {
 
 sub add_retention_info {
     my ($self, $info) = @_;
+
+    if (not defined $info) {
+        API::X->throw({
+            message => "Missing required param : `info`",
+        });
+    }
+
+    if (!ref($info) or ref($info) ne 'HASH') {
+        API::X->throw({
+            message => "Argument `info` must be a HashRef",
+        });
+    }
 
     my $peptide    = $info->{peptide};
     my $cache      = $self->cache;
