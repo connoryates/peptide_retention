@@ -78,9 +78,11 @@ sub _get_retention_info {
 sub add_retention_info {
     my ($self, $info) = @_;
 
-    API::X->throw({
-        message => "No retention info key detected",
-    }) unless defined $info->{retention_info};
+    if (not defined $info->{retention_info}) {
+        API::X->throw({
+            message => "No retention info key detected",
+        });
+    }
 
     my $ret = $info->{retention_info};
 
@@ -132,10 +134,14 @@ sub add_retention_info {
 sub get_bb_retention_correlation_data {
     my $self = shift;
 
-    my $rs = $self->schema->uniprot_yeast->search({})
-      or API::X->throw({
-             message => "Failed to get correlation data : $_",
-         });
+    my $rs;
+    try {
+        $rs = $self->schema->uniprot_yeast->search({})
+    } catch {
+        API::X->throw({
+            message => "Failed to get correlation data : $_",
+        });
+    };
 
     my @bullbreese = ();
     my @retention  = ();
@@ -158,10 +164,14 @@ sub get_bb_retention_correlation_data {
 sub get_peptide_retention_correlation_data {
     my $self = shift;
 
-    my $rs = $self->schema->uniprot_yeast->search({})
-      or API::X->throw({
-             message => "Failed to get correlation data",
-         });
+    my $rs;
+    try {
+        $rs = $self->schema->uniprot_yeast->search({})
+    } catch {
+        API::X->throw({
+            message => "Failed to get correlation data : $_",
+        });
+    };
 
     my @peptide_lengths = ();
     my @retention       = ();
@@ -198,18 +208,22 @@ sub get_peptide_retention_filtered_data {
     }
 
     foreach my $required (qw(filter data)) {
-        API::X->throw({
-            message => "Missing required arg : $required",
-        }) unless defined $filter->{$required};
+        if (not defined $filter->{$required}) {
+            API::X->throw({
+                message => "Missing required arg : $required",
+            });
+        }
     }
 
     my $filter_type = $filter->{filter};
     my $filter_data = $filter->{data};
 
     # TODO: support more than one filter type
-    API::X->throw({
-        message =>  "Unknown or unsupported filter type",
-    }) unless defined $filter_type or $filter_type !~ /peptide_length/;
+    if (not defined $filter_type or $filter_type !~ /peptide_length/) {
+        API::X->throw({
+            message =>  "Unknown or unsupported filter type",
+        });
+    }
 
     my $method = '_' . $filter_type . '_filter';
 
@@ -274,13 +288,17 @@ sub get_bar_chart_peptide_data {
         });
     }
 
-    my $peptide_data = $self->schema->uniprot_yeast({ peptide => $peptide });
+    my ($peptide_data, $column_data);
+    try {
+        $peptide_data = $self->schema->uniprot_yeast({ peptide => $peptide });
+        $column_data  = $peptide_data->{_column_data};
+    } catch {
+        API::X->throw({
+            message => "Cannot find peptide data for peptide $peptide : $_",
+        });
+    };
 
-    API::X->throw({
-        message => "Cannot find peptide data",
-    }) unless defined $peptide->{_column_data};
-
-    return $peptide_data->{_column_data};
+    return $column_data;
 }
 
 sub validate_api_key {
