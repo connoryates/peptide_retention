@@ -23,6 +23,12 @@ subtest 'Testing throw' => sub {
         qr/Test/,
         "Throw is ok",
     );
+
+    dies_ok {
+       API::X->throw({
+           message => 'Test',
+       });
+    } "Throw dies ok";
 };
 
 done_testing();
