@@ -1,7 +1,9 @@
 package Peptide::Correlation;
 use Moose;
 
+use API::X;
 use Peptide::Model;
+use Log::Any qw/$log/;
 use Statistics::Basic qw(correlation);
 
 has 'type' => ( is => 'rw', isa => 'Str' );
@@ -20,7 +22,9 @@ sub _build_model {
 sub correlate_retention_datasets {
     my $self = shift;
 
-    my $type = $self->type or die "Unspecified type";
+    my $type = $self->type or API::X->throw({
+        message => "Unspecified type"
+    });
 
     my $data;
     if ($type eq 'bullbreese_retention') {
@@ -29,15 +33,30 @@ sub correlate_retention_datasets {
     elsif ($type eq 'peptide_length_retention') {
         $data = $self->model->get_peptide_retention_correlation_data;
     } else {
-        die "Not a valid type. Valid types are:\n\tbullbreese_retention\n\tpeptide_length_retention\n\n";
+        API::X->throw({
+            message => "Not a valid type. Valid types are: bullbreese_retention, peptide_length_retention"
+        });
     }
 
-    die "Extra key, will not correlate correctly" if (keys %$data > 2);
+    if (keys %$data > 2) {
+        API::X->throw({
+            message => "Extra key, will not correlate correctly",
+        });
+    }
 
-    my $vector_2 = delete $data->{retention}; # Plz change
+    my $vector_2 = delete $data->{retention};
     my $vector_1 = $data->{ [ keys %$data]->[0] };
 
-    my $corr = $self->correlate($vector_1, $vector_2);
+    my $corr;
+    try {
+        $corr = $self->correlate($vector_1, $vector_2);
+    } catch {
+        $log->warn("Failed to correlate datasets: $_");
+
+        API::X->throw({
+            message => "Faield to correlate datasets : $_"
+        });
+    };
 
     return defined $corr ? $corr : undef;
 }
