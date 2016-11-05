@@ -4,6 +4,7 @@ use Dancer ':syntax';
 use Dancer::Exception;
 use API::Plugins::Upload;
 use API::Plugins::KeyManager;
+use API::X;
 
 hook 'before' => sub {
     my $key_manager = key_manager();
@@ -14,14 +15,20 @@ hook 'before' => sub {
 post '/api/v1/upload' => sub {
      my $params = params || {};
 
-     send_error("Missing file to upload" => 400) unless defined $params->{file};
+     API::X->throw({
+         message => "Missing file to upload",
+         code    => 400
+     }) unless defined $params->{file};
 
      my $status;
      try {
          my $upload_manager = upload_manager();
             $status = $upload_manager->upload($params->{file});
      } catch {
-         send_error("Something went wrong" => 500);
+         API::X->throw({
+             message => "Something went wrong",
+             code    => 500
+         });
      };
 
      return $status;

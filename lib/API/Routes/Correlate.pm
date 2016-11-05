@@ -4,6 +4,7 @@ use Dancer ':syntax';
 use Dancer::Exception qw(:all);
 use Dancer::Plugin::Res;
 use API::Plugins::CorrelateManager;
+use API::X;
 
 set serializer => 'JSON';
 
@@ -18,9 +19,15 @@ post '/api/v1/correlate/bull_breese/peptide_length' => sub {
 
     my $auth   = var 'authorized';
 
-    send_error("Unauthorized" => 401) unless defined $auth;
-    send_error("Missing required arg : peptide_length" => 400)
-      unless defined $params->{peptide_length};
+    API::X->throw({
+         message => "Unauthorized",
+         code    => 401
+    }) unless defined $auth;
+
+    API::X->throw({
+        message => "Missing required arg : peptide_length",
+        code    => 400
+    }) unless defined $params->{peptide_length};
 
     my $correlation;
     try {
@@ -29,7 +36,10 @@ post '/api/v1/correlate/bull_breese/peptide_length' => sub {
             filter => 'peptide_length',
         });
     } catch {
-        die "Failed to get correlation data : $_";
+        API::X->throw({
+            message => "Failed to get correlation data : $_",
+            code    => 500
+        });
     };
 
     # I think I'm getting a context high - Stewie Griffin
