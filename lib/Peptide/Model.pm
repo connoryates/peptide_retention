@@ -61,9 +61,9 @@ sub _get_retention_info {
         });
     }
 
-    my $info = $self->retention->tryptic_vals($peptide);
-
     try {
+        my $info = $self->retention->tryptic_vals($peptide);
+
         $log->info("Adding retention info : $info");
         $self->add_retention_info($info);
     } catch {
