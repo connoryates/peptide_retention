@@ -31,3 +31,4 @@ requires 'Hash::Merge', 0;
 requires 'Bio::SeqIO', 0;
 requires 'Throwable::Error', 0;
 requires 'Log::Any', 0;
+requires 'Test::Exception', 0;
