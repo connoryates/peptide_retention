@@ -75,7 +75,9 @@ sub correlate_peptides {
     try {
         $correlation = $self->correlation->correlate($vector_1, $vector_2);
     } catch {
-        die "Failed to correlate datasets : $_";
+        API::X->throw({
+            message => "Failed to correlate datasets : $_",
+        });
     };
 
     if ($correlation ne 'n/a') {
