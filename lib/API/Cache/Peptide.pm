@@ -3,7 +3,9 @@ use Moose;
 
 extends 'API::Cache';
 
+use API::X;
 use Try::Tiny;
+use Log::Any qw/$log/;
 use JSON::XS qw(decode_json encode_json);
 
 use constant EXPIRATION_TIME => 8600;
@@ -13,9 +15,16 @@ has 'namespace' => ( is => 'rw', isa => 'Str', default => sub { return "peptide"
 sub set_peptide_cache {
     my ($self, $data) = @_;
 
+    if (not defined $data) {
+        API::X->throw({
+            message => "Missing required param : $data",
+        });
+    }
+
     foreach my $required (qw(peptide retention_info)) {
-        die "Missing required arg : $required"
-          unless defined $data->{$required};
+        API::X->throw({
+            message => "Missing required arg : $required",
+        }) unless defined $data->{$required};
     }
 
     my $chi = $self->chi;
@@ -30,7 +39,7 @@ sub set_peptide_cache {
         $status     = $chi->set($peptide, $json, EXPIRATION_TIME);
     } catch {
         $status = undef;
-        warn "Failed to set cache : $_";
+        $log->warn("Failed to set cache : $_");
     };
 
     return $status;
@@ -39,8 +48,11 @@ sub set_peptide_cache {
 sub get_peptide_cache {
     my ($self, $peptide) = @_;
 
-    die "Missing required arg : peptide"
-      unless defined $peptide;
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required arg : peptide",
+        });
+    }
 
     my $chi   = $self->chi;
     my $json  = $self->chi->get($peptide);
@@ -52,7 +64,7 @@ sub get_peptide_cache {
         $data = decode_json($json);
     } catch {
         $data = undef;
-        warn "Failed to get $peptide from cache : $_";
+        $log->warn("Failed to get $peptide from cache : $_");
     };
 
     return $data;
@@ -61,13 +73,33 @@ sub get_peptide_cache {
 sub is_cached {
     my ($self, $peptide) = @_;
 
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
+
     return $self->chi->is_valid($peptide);
 }
 
 sub remove_key {
     my ($self, $key) = @_;
 
-    return $self->chi->remove($key);
+    if (not defined $key) {
+        API::X->throw({
+            message => "Missing required param : key",
+        });
+    }
+
+    my $status;
+    try {
+        $status = $self->chi->remove($key);
+    } catch {
+        $status = undef;
+        $log->warn("Failed to remove cache key : $_");
+    };
+
+    return $status;
 }
 
 __PACKAGE__->meta->make_immutable;
