@@ -1,8 +1,9 @@
 package Peptide::Model;
 use Moose;
 
-use Peptide::Schema;
 use Peptide::Retention;
+use Log::Any qw/$log/;
+use Peptide::Schema;
 use Try::Tiny;
 use API::X;
 
@@ -31,6 +32,12 @@ sub _build_retention {
 sub get_retention_info {
     my ($self, $peptide) = @_;
 
+    if (not defined $peptide) {
+        API::X->throw({
+           message => "Missing required param : peptide",
+        });
+    }
+
     my $data;
     try {
         $data = $self->schema->uniprot_yeast->find({ peptide => $peptide });
@@ -48,12 +55,19 @@ sub get_retention_info {
 sub _get_retention_info {
     my ($self, $peptide) = @_;
 
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
+
     my $info = $self->retention->tryptic_vals($peptide);
 
     try {
+        $log->info("Adding retention info : $info");
         $self->add_retention_info($info);
     } catch {
-        warn "Could not add $peptide to database : $_";
+        $log->warn("Could not add $peptide to database : $_");
     };
 
     $info->{retention_info}->{length} = length($peptide);
@@ -129,7 +143,7 @@ sub get_bb_retention_correlation_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        last unless defined $peptide;
+        next unless defined $peptide;
 
         push @bullbreese, $peptide->{bullbreese};
         push @retention, $peptide->{hodges_prediction};
@@ -155,7 +169,7 @@ sub get_peptide_retention_correlation_data {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        last unless defined $peptide;
+        next unless defined $peptide;
 
         push @peptide_lengths, length( $peptide->{peptide} );
         push @retention, $peptide->{hodges_prediction};
@@ -171,9 +185,23 @@ sub get_peptide_retention_correlation_data {
 sub get_peptide_retention_filtered_data {
     my ($self, $filter) = @_;
 
-    API::X->throw({
-        message => "Argument filter must be a HashRef",
-    }) unless ref($filter) and ref($filter) eq 'HASH';
+    if (not defined $filter) {
+        API::X->throw({
+            message => "Missing required param : filter",
+        });
+    }
+
+    if (!ref($filter) or ref($filter) ne 'HASH') {
+        API::X->throw({
+            message => "Param filter must be a HashRef",
+        });
+    }
+
+    foreach my $required (qw(filter data)) {
+        API::X->throw({
+            message => "Missing required arg : $required",
+        }) unless defined $filter->{$required};
+    }
 
     my $filter_type = $filter->{filter};
     my $filter_data = $filter->{data};
@@ -215,6 +243,7 @@ sub _peptide_length_filter {
            length => "$peptide_filter_length",
        });
     } catch {
+        $log->warn("Failed to get peptide filter length data for filter length : $peptide_filter_length");
         API::X->throw({
             message => "Failed to get peptide filter length data : $_",
         });
@@ -226,7 +255,7 @@ sub _peptide_length_filter {
     while (my $val  = $rs->next) {
         my $peptide = $val->{_column_data};
 
-        last unless defined $peptide;
+        next unless defined $peptide;
 
         push @bullbreese, $peptide->{bullbreese};
         # TODO: Support algorithm filters as well
@@ -238,6 +267,12 @@ sub _peptide_length_filter {
 
 sub get_bar_chart_peptide_data {
     my ($self, $peptide) = @_;
+
+    if (not defined $peptide) {
+        API::X->throw({
+            message => "Missing required param : peptide",
+        });
+    }
 
     my $peptide_data = $self->schema->uniprot_yeast({ peptide => $peptide });
 
