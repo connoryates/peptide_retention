@@ -3,7 +3,9 @@ use Moose;
 
 extends 'API::Cache';
 
+use API::X;
 use Try::Tiny;
+use Log::Any qw/$log/;
 use JSON::XS qw(decode_json encode_json);
 
 use constant EXPIRATION_TIME => 8600;
@@ -13,9 +15,22 @@ has 'namespace' => ( is => 'rw', isa => 'Str', default => sub { return "correlat
 sub set_correlate_cache {
     my ($self, $data) = @_;
 
+    if (not defined $data) {
+        API::X->throw({
+            message => "Missing required param : data",
+        });
+    }
+
+    if ( !ref($data) or ref($data) ne 'HASH' ) {
+        API::X->throw({
+            message => "Param data must be a HashRef",
+        });
+    }
+
     foreach my $required (qw(key correlation)) {
-        die "Missing required arg : $required"
-          unless defined $data->{$required};
+        API::X->throw({
+            message => "Missing required arg : $required",
+        }) unless defined $data->{$required};
     }
 
     my $chi = $self->chi;
@@ -30,7 +45,7 @@ sub set_correlate_cache {
         $status  = $chi->set($key, $json, EXPIRATION_TIME);
     } catch {
         $status  = undef;
-        warn "Failed to set cache : $_";
+        $log->warn("Failed to set cache : $_");
     };
 
     return $status;
@@ -39,11 +54,20 @@ sub set_correlate_cache {
 sub get_correlate_cache {
     my ($self, $key) = @_;
 
-    die "Missing required arg : key"
-      unless defined $key;
+    if (not defined $key) {
+        API::X->throw({
+            message => "Missing required param : key",
+        });
+    }
 
-    my $chi   = $self->chi;
-    my $json  = $self->chi->get($key);
+    my $chi = $self->chi;
+ 
+    my $json;
+    try {
+        $json = $self->chi->get($key);
+    } catch {
+        $log->warn("Failed to get cache data for $key : $_");
+    };
 
     return undef unless defined $json;
 
@@ -52,7 +76,7 @@ sub get_correlate_cache {
         $data = decode_json($json);
     } catch {
         $data = undef;
-        warn "Failed to get $key from cache : $_";
+        $log->warn("Failed to get $key from cache : $_");
     };
 
     return $data;

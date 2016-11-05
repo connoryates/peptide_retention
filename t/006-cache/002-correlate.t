@@ -11,8 +11,10 @@ my $cache = API::Cache::Correlate->new;
 isa_ok($cache, 'API::Cache::Correlate');
 isa_ok($cache, 'API::Cache');
 
+my $filter = 'test';
+
 my $test_data = {
-    filter      => 'test',
+    key         => $filter,
     correlation => 1,
 };
 
@@ -29,7 +31,7 @@ subtest 'Testing set_correlate_cache' => sub {
 };
 
 subtest 'Testing get_correlate_cache' => sub {
-    my $data = $cache->get_correlate_cache($test_data->{filter});
+    my $data = $cache->get_correlate_cache($filter);
 
     is_deeply($data, $test_data, "get_correlate_cache return correct data");
 };
