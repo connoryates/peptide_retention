@@ -3,6 +3,8 @@ use Moose;
 with 'Peptide::Schema::_scaffold';
 
 use Peptide::Config;
+use Try::Tiny;
+use API::X;
 
 our %INSTANCES;
 
@@ -33,7 +35,15 @@ around BUILDARGS => sub {
 
 sub connect_args {
      my $self = shift;
-     my $pg   = $self->config->{database}->{pg};
+
+     my $pg;
+     try {
+         $pg = $self->config->{database}->{pg};
+     } catch {
+         API::X->throw({
+             message => "Cannot find database config! : $_",
+         });
+     };
 
      return ($pg->{dsn}, $pg->{user}, $pg->{password});
 }
