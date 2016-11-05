@@ -4,6 +4,7 @@ use Moose;
 use Peptide::Schema;
 use Peptide::Retention;
 use Try::Tiny;
+use API::X;
 
 has 'schema' => (
     is      => 'ro',
@@ -30,7 +31,14 @@ sub _build_retention {
 sub get_retention_info {
     my ($self, $peptide) = @_;
 
-    my $data = $self->schema->uniprot_yeast->find({ peptide => $peptide });
+    my $data;
+    try {
+        $data = $self->schema->uniprot_yeast->find({ peptide => $peptide });
+    } catch {
+        API::X->throw({
+            message => "Failed to get retention info for peptide : $peptide : $_",
+        });
+    };
 
     return $self->_get_retention_info($peptide) unless defined $data->{_column_data};
 
@@ -56,24 +64,52 @@ sub _get_retention_info {
 sub add_retention_info {
     my ($self, $info) = @_;
 
-    die "No retention info key detected" unless defined $info->{retention_info};
-
-    my $algorithm = $info->{retention_info}->{prediction_algorithm} . "_prediction";
+    API::X->throw({
+        message => "No retention info key detected",
+    }) unless defined $info->{retention_info};
 
     my $ret = $info->{retention_info};
 
+    if (not defined $ret->{peptide}) {
+        API::X->throw({
+            message => "Missing reqired retention_info param : $ret->{peptide}",
+        });
+    }
+
+    if (not defined $ret->{bullbreese}) {
+        try {
+            $ret->{bullbreese} = $self->retention->assign_bb_values($ret->{peptide});
+        } catch {
+            API::X->throw({
+                message => "Failed to assign bullbreese values : $_",
+            });
+        };
+    }
+
+    if (not defined $ret->{hodges_prediction}) {
+        try {
+            $ret->{hodges_prediction} = $self->retention->hodges->predict( peptide => $ret->{peptide} );
+        } catch {
+            API::X->throw({
+                message => "Failed to get hodges prediction : $_",
+            });
+        };
+    }
+
     my $payload = {
-        $algorithm => $ret->{predicted_retention},
-        bullbreese => $ret->{bullbreese},
-        peptide    => $ret->{peptide},
-        length     => length( $ret->{peptide} ),
+        hodges_prediction => $ret->{hodges_prediction},
+        bullbreese        => $ret->{bullbreese},
+        peptide           => $ret->{peptide},
+        length            => length( $ret->{peptide} ),
     };
 
     my $status;
     try {
         $status = $self->schema->uniprot_yeast->find_or_create($payload);
     } catch {
-        warn "Could not add payload to database : $_";
+        API::X->throw({
+            message => "Could not add payload to database : $_",
+        });
     };
 
     return $status;
@@ -82,7 +118,10 @@ sub add_retention_info {
 sub get_bb_retention_correlation_data {
     my $self = shift;
 
-    my $rs = $self->schema->uniprot_yeast->search({});
+    my $rs = $self->schema->uniprot_yeast->search({})
+      or API::X->throw({
+             message => "Failed to get correlation data : $_",
+         });
 
     my @bullbreese = ();
     my @retention  = ();
@@ -105,7 +144,10 @@ sub get_bb_retention_correlation_data {
 sub get_peptide_retention_correlation_data {
     my $self = shift;
 
-    my $rs   = $self->schema->uniprot_yeast->search({});
+    my $rs = $self->schema->uniprot_yeast->search({})
+      or API::X->throw({
+             message => "Failed to get correlation data",
+         });
 
     my @peptide_lengths = ();
     my @retention       = ();
@@ -129,19 +171,28 @@ sub get_peptide_retention_correlation_data {
 sub get_peptide_retention_filtered_data {
     my ($self, $filter) = @_;
 
-    die "Argument filter must be a HashRef"
-      unless ref($filter) and ref($filter) eq 'HASH';
+    API::X->throw({
+        message => "Argument filter must be a HashRef",
+    }) unless ref($filter) and ref($filter) eq 'HASH';
 
     my $filter_type = $filter->{filter};
     my $filter_data = $filter->{data};
 
     # TODO: support more than one filter type
-    die "Unknown or unsupported filter type"
-      unless defined $filter_type or $filter_type !~ /peptide_length/;
+    API::X->throw({
+        message =>  "Unknown or unsupported filter type",
+    }) unless defined $filter_type or $filter_type !~ /peptide_length/;
 
     my $method = '_' . $filter_type . '_filter';
 
-    my ($bullbreese, $retention_info) = $self->$method($filter_data);
+    my ($bullbreese, $retention_info);
+    try {
+        ($bullbreese, $retention_info) = $self->$method($filter_data);
+    } catch {
+        API::X->throw({
+            message => "Failed to get filter data : $_",
+        });
+    };
 
     return +{
         retention_info => $retention_info,
@@ -152,9 +203,22 @@ sub get_peptide_retention_filtered_data {
 sub _peptide_length_filter {
     my ($self, $peptide_filter_length) = @_;
 
-    my $rs = $self->schema->uniprot_yeast->search({
-        length => "$peptide_filter_length",
-    });
+    if (not defined $peptide_filter_length) {
+        API::X->throw({
+            message => "Missing required arg : peptide_filter_length",
+        });
+    }
+
+    my $rs;
+    try {
+        $rs = $self->schema->uniprot_yeast->search({
+           length => "$peptide_filter_length",
+       });
+    } catch {
+        API::X->throw({
+            message => "Failed to get peptide filter length data : $_",
+        });
+    };
 
     my @bullbreese     = ();
     my @retention_info = ();
@@ -177,7 +241,9 @@ sub get_bar_chart_peptide_data {
 
     my $peptide_data = $self->schema->uniprot_yeast({ peptide => $peptide });
 
-    die "Cannot find peptide data" unless defined $peptide->{_column_data};
+    API::X->throw({
+        message => "Cannot find peptide data",
+    }) unless defined $peptide->{_column_data};
 
     return $peptide_data->{_column_data};
 }
