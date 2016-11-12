@@ -99,22 +99,7 @@ sub add_retention_info {
     my $cache      = $self->cache;
 
     if ($cache->is_cached($peptide)) {
-        my $cached = $cache->get_peptide_cache($peptide);
-
-        # Order matters! Left-precedent
-        my $new_cache = $self->util->hash_merge(
-            {
-                prediciton_algorithm => $info->{prediciton_algorithm},
-                retention_info       => $info->{retention_info},
-                peptide              => $peptide,
-            },
-            $cached,
-        );
-
         $cache->remove_key($peptide);
-        $cache->set_peptide_cache($new_cache);
-    } else {
-        $cache->set_peptide_cache($info);
     }
 
     return $self->model->add_retention_info($info);
