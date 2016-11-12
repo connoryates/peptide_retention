@@ -2,6 +2,7 @@ package Peptide::Correlation;
 use Moose;
 
 use API::X;
+use Try::Tiny;
 use Peptide::Model;
 use Log::Any qw/$log/;
 use Statistics::Basic qw(correlation);
@@ -20,41 +21,66 @@ sub _build_model {
 }
 
 sub correlate_retention_datasets {
-    my $self = shift;
+    my ($self, $filter) = @_;
 
     my $type = $self->type or API::X->throw({
         message => "Unspecified type"
     });
 
-    my $data;
+    my ($data, @vector_1, @vector_2);
+
+    # Only 1 prediction algorithm currently supported!
     if ($type eq 'bullbreese_retention') {
-        $data = $self->model->get_bb_retention_correlation_data;
+        if (defined $filter) {
+            if (ref($filter) and ref($filter) eq 'HASH') {
+
+                foreach my $required (qw(filter data)) {
+                    if (not defined $filter->{$required}) {
+                        API::X->throw({
+                            message => "Missing required param : $required",
+                        });
+                    }
+                }
+
+                try {
+                    $data = $self->model->get_peptide_retention_filtered_data($filter);
+                } catch {
+                    API::X->throw({
+                        message => "Failed to get filtered correlation data : $_",
+                    });
+                };
+            }
+            else {
+                API::X->throw({
+                    message => "Arg filter must be a HashRef",
+                });
+            }
+        }
+        else {
+            $data = $self->model->get_bb_retention_correlation_data;
+        } 
+        @vector_1 = map { $_->{predictions}->[0]->{predicted_time} } @$data;
+        @vector_2 = map { $_->{bullbreese} } @$data;
     }
     elsif ($type eq 'peptide_length_retention') {
         $data = $self->model->get_peptide_retention_correlation_data;
+
+        @vector_1 = map { $_->{predictions}->[0]->{predicted_time} } @$data;
+        @vector_2 = map { $_->{length} } @$data;
     } else {
         API::X->throw({
             message => "Not a valid type. Valid types are: bullbreese_retention, peptide_length_retention"
         });
     }
 
-    if (keys %$data > 2) {
-        API::X->throw({
-            message => "Extra key, will not correlate correctly",
-        });
-    }
-
-    my $vector_2 = delete $data->{retention};
-    my $vector_1 = $data->{ [ keys %$data]->[0] };
-
     my $corr;
     try {
-        $corr = $self->correlate($vector_1, $vector_2);
+        $corr = $self->correlate(\@vector_1, \@vector_2);
     } catch {
         $log->warn("Failed to correlate datasets: $_");
 
         API::X->throw({
-            message => "Faield to correlate datasets : $_"
+            message => "Failed to correlate datasets : $_"
         });
     };
 
@@ -64,7 +90,34 @@ sub correlate_retention_datasets {
 sub correlate {
     my ($self, $vector_1, $vector_2) = @_;
 
-    return correlation( $vector_1, $vector_2 );
+    if (not defined $vector_1 or not defined $vector_2) {
+        API::X->throw({
+            message => "Two ArrayRefs must be supplied",
+        });
+    }
+
+    if (!ref($vector_1) or ref($vector_1) ne 'ARRAY') {
+        API::X->throw({
+            message => "Argument 1 must be an ArrayRef",
+        });
+    }
+
+    if (!ref($vector_2) or ref($vector_2) ne 'ARRAY') {
+        API::X->throw({
+            message => "Argument 2 must be an ArrayRef",
+        });
+    }
+
+    my $correlation;
+    try {
+       $correlation = correlation( $vector_1, $vector_2 );
+    } catch {
+        API::X->throw({
+            message => "Failed to correlate datasets : $_",
+        });
+    };
+
+    return $correlation;
 }
 
 __PACKAGE__->meta->make_immutable;

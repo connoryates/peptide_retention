@@ -1,6 +1,7 @@
 package Peptide::Util;
 use Moose;
 
+use Hash::Diff qw(diff left_diff);
 use Hash::Merge;
 use Try::Tiny;
 use API::X;
@@ -50,4 +51,16 @@ sub hash_merge {
     return $combined;
 }
 
+
+sub merge_if_different {
+    my ($self, $new, $orig) = @_;
+
+    my $diff = left_diff($new, $orig);
+
+    if (defined $diff and ref($diff) and ref($diff) eq 'HASH') {
+        return $self->hash_merge($new, $orig);
+    }
+
+    return $orig;
+}
 __PACKAGE__->meta->make_immutable;

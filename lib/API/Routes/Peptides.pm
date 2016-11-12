@@ -22,8 +22,8 @@ post '/api/v1/retention/peptide/info' => sub {
 
     API::X->throw({
         message => "Unauthorized",
-        code    => 401
-    ) unless defined $authorized;
+        code    => 401,
+    }) unless defined $authorized;
 
     API::X->throw({
         message => "Missing required param : peptide",
@@ -38,7 +38,7 @@ post '/api/v1/retention/peptide/info' => sub {
         API::X->throw({
             message => "Failed to get retention info : $_",
             code    =>  500,
-        );
+        });
     };
 
     return res 200, $data;
@@ -52,7 +52,7 @@ post '/api/v1/retention/peptide/add' => sub {
     API::X->throw({
         message => "Unauthorized",
         code    => 401
-    ) unless defined $authorized;
+    }) unless defined $authorized;
 
     foreach my $required (qw(peptide retention_time prediciton_algorithm)) {
         API::X->throw({

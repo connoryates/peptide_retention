@@ -9,6 +9,8 @@ use Dancer::Test;
 use_ok 'API::Routes::Correlate';
 
 subtest 'Retention routes' => sub {
+    plan skip_all => "ENV{CORRELATION_TESTS} not set" unless defined $ENV{CORRELATION_TESTS};
+
     route_exists [POST => '/api/v1/correlate/bull_breese/peptide_length'], "Retention correlate";
     response_status_is [
             POST => '/api/v1/correlate/bull_breese/peptide_length?peptide_length=17'

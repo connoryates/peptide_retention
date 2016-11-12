@@ -20,11 +20,17 @@ subtest 'Testing tryptic_vals' => sub {
     my $vals = $ret->tryptic_vals('R');
 
     my $expect = {
+        predicition_info => [
+            {
+                predicted_time => -0.6,
+                algorithm      => 'hodges'
+            }
+        ],
         retention_info => {
-           bullbreese        => '0.69',
-           peptide           => 'R',
-           hodges_prediction => '-0.6',
-           length            => 1,
+            length     => 1,
+            sequence   => 'R',
+            bullbreese => 0.69,
+            cleavage   => 'tryptic'
         }
     };
 

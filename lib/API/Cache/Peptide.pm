@@ -54,14 +54,10 @@ sub get_peptide_cache {
         });
     }
 
-    my $chi   = $self->chi;
-    my $json  = $self->chi->get($peptide);
-
-    return undef unless defined $json;
-
     my $data;
     try {
-        $data = decode_json($json);
+        my $json = $self->chi->get($peptide);
+           $data = decode_json($json);
     } catch {
         $data = undef;
         $log->warn("Failed to get $peptide from cache : $_");
