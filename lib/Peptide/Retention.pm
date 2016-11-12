@@ -68,10 +68,10 @@ sub tryptic_vals {
         });
     }
 
-    my $peptide_info;
+    my ($prediction_info, $bb_vals);
     try {
-        my $bb_vals      = $self->assign_bb_values($peptide);
-           $peptide_info = $self->hodges_predict($peptide, $bb_vals);
+        $bb_vals         = $self->assign_bb_values($peptide);
+        $prediction_info = $self->hodges_predict($peptide);
     } catch {
         $log->warn("Cannot determine peptide info : $_");
 
@@ -80,20 +80,26 @@ sub tryptic_vals {
         });
     };
 
+    my $peptide_info = {
+        retention_info  => {
+            sequence    => $peptide,
+            bullbreese  => $bb_vals,
+            length      => length($peptide),
+            cleavage    => 'tryptic',
+        },
+        %$prediction_info,
+    };
+
     return $peptide_info;
 }
 
 sub hodges_predict {
-    my ($self, $peptide, $bb_vals) = @_;
+    my ($self, $peptide) = @_;
 
     if (not defined $peptide) {
         API::X->throw({
             message => "Missing required param : peptide",
         });
-    }
-
-    if (not defined $bb_vals and defined $peptide) {
-        $bb_vals = $self->assign_bb_values($peptide);
     }
 
     my $ret;
@@ -108,12 +114,12 @@ sub hodges_predict {
     };
 
     return +{
-        retention_info => {
-            peptide            => $peptide,
-            hodges_prediction  => $ret,
-            bullbreese         => $bb_vals,
-            length             => length($peptide),
-        },
+        predicition_info => [
+            {
+                algorithm      => 'hodges',
+                predicted_time => $ret,
+            },
+        ],
     };
 }
 
