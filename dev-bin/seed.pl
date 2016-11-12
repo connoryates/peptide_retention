@@ -28,7 +28,7 @@ sub run {
     my $path  = "$RealBin/../data/seed/";
     my @files = `ls $path`;
 
-    foreach my $file (@files) {
+    foreach my $file (grep { /reversed/ } @files) {
         next if $file =~ /tar\.gz/;
 
         $file =~ s/\n//g;
@@ -44,10 +44,19 @@ sub run {
 
         while ( my $seq  = <$stream> ) {
             my $peptide  = $seq->primary_seq->seq;
+            my $desc     = $seq->primary_seq->description;
+            my $protein  = $seq->primary_seq->primary_id;
+
             my $tryptic  = $retention->tryptic($peptide);
 
             foreach my $t (@$tryptic) {
                 my $ret_info = $retention->tryptic_vals($t);
+
+                $ret_info->{protein_info} = {
+                    primary_id  => $protein,
+                    description => $desc,
+                    sequence    => $peptide,
+                };
 
                 if ($dry_run) {
                     print Dumper $ret_info;
