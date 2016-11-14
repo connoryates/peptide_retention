@@ -31,14 +31,18 @@ sub assign_molecular_weight {
        my @mapped;
        foreach my $s (@seq) {
            if ( not grep { /$s/ } @amino_acids ) {
-               die "$s is not a valid amino acid!";
+               API::X->throw({
+                  message => "$s is not a valid amino acid!",
+               });
            }
 
            if ( my $w = $WEIGHTS{$s} ) {
                push @mapped, $w;
            }
            else {
-               die "Cannot find molecular weight for $_";
+               API::X->throw({
+                  message => "Cannot find molecular weight for $_";
+               });
            }
        }
 
