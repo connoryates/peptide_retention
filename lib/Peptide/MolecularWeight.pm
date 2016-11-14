@@ -41,7 +41,7 @@ sub assign_molecular_weight {
            }
            else {
                API::X->throw({
-                  message => "Cannot find molecular weight for $_";
+                  message => "Cannot find molecular weight for $_",
                });
            }
        }
