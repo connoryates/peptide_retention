@@ -120,7 +120,7 @@ sub _get_retention_info {
 
     my ($info, $update);
     try {
-        $info   = $self->retention->tryptic_vals($peptide);
+        $info = $self->retention->tryptic_vals($peptide);
 
         $log->info("Adding retention info : $info");
         $update = $self->add_retention_info($info);
