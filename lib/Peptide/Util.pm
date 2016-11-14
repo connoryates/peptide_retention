@@ -55,6 +55,24 @@ sub hash_merge {
 sub merge_if_different {
     my ($self, $new, $orig) = @_;
 
+    if (not defined $new or not defined $orig) {
+        API::X->throw({
+            message => "Two HashRefs must be provided",
+        });
+    }
+
+    if (!ref($new) or ref($new) ne 'HASH') {
+        API::X->throw({
+            message => "Arg 1 must be a HashRef",
+        });
+    }
+
+    if (!ref($orig) or ref($orig) ne 'HASH') {
+        API::X->throw({
+            message => "Arg 2 must be a HashRef",
+        });
+    }
+
     my $diff = left_diff($new, $orig);
 
     if (defined $diff and ref($diff) and ref($diff) eq 'HASH') {
