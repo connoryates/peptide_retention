@@ -28,7 +28,7 @@ sub run {
     my $path  = "$RealBin/../data/seed/";
     my @files = `ls $path`;
 
-    foreach my $file (grep { /reversed/ } @files) {
+    foreach my $file (@files) {
         next if $file =~ /tar\.gz/;
 
         $file =~ s/\n//g;
