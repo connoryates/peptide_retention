@@ -33,3 +33,4 @@ requires 'Throwable::Error', 0;
 requires 'Log::Any', 0;
 requires 'Test::Exception', 0;
 requires 'Hash::Diff', 0;
+requires 'Search::Elasticsearch', 0;
