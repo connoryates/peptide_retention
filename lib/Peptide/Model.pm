@@ -526,9 +526,9 @@ sub _peptide_length_filter {
             });
         };
 
-        my $cursor = $pred_obj->cursor;
+        my $_cursor = $pred_obj->cursor;
 
-        while (my @predictions = $cursor->next) {
+        while (my @predictions = $_cursor->next) {
             push @correlation_data, {
                 bullbreese  => $peptides[3],
                 predictions => $predictions[3],
