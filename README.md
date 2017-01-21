@@ -18,7 +18,7 @@ If you want to contribute, make sure you read ```CONTRIBUTING.md``` before commi
 
 ### Setup
 
-You will need a Postgres instance along with a seed data file (which is not available through this repo) to begin.
+You will need a running Postgres instance to begin.
 
 Build the app dependencies with:
 
