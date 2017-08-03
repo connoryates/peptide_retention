@@ -23,7 +23,7 @@ post '/api/v1/retention/peptide/info' => sub {
     API::X->throw({
         message => "Unauthorized",
         code    => 401,
-    }) unless defined $authorized;
+    }) unless $authorized;
 
     API::X->throw({
         message => "Missing required param : peptide",
