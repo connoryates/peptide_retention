@@ -58,7 +58,7 @@ post '/api/v1/retention/peptide/add' => sub {
         API::X->throw({
             message => "Missing param : $required",
             code    => 500
-        }) unless defined $params->{$required};
+        }) unless $params->{$required};
     }
 
     $params->{retention_info}->{prediction_info} = $params->{prediciton_algorithm};
