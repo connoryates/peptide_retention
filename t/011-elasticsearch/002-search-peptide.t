@@ -13,7 +13,7 @@ isa_ok($elasticsearch, 'API::Elasticsearch');
 
 subtest 'Testing search_peptide' => sub {
     my $result = $elasticsearch->search_peptide({
-        keywords => 'mannosyltransferase',
+        keywords => 'Chromosome IX cosmid 9168 OS=Saccharomyces cerevisiae (strain ATCC 204508 / S288c) PE=4 SV=1',
     });
 
     use Data::Dumper;

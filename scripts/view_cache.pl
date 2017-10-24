@@ -21,7 +21,7 @@ if ($namespace eq 'correlate') {
     my @keys  = $cache->chi->get_keys();
 
     foreach my $key (@keys) {
-       print Dumper $cache->chi->get($key);
+        print Dumper $cache->chi->get($key);
     }
 }
 elsif ($namespace eq 'peptide') {
@@ -29,9 +29,18 @@ elsif ($namespace eq 'peptide') {
     my @keys  = $cache->chi->get_keys();
 
     foreach my $key (@keys) {
-       print Dumper $cache->chi->get($key);
+        print Dumper $cache->chi->get($key);
     }
-} else {
+}
+elsif ($namespace eq 'mass') {
+    my $cache = API::Cache::Mass->new;
+    my @keys  = $cache->chi->get_keys();
+
+    foreach my $key (@keys) {
+        print Dumper $cache->chi->get($key);
+    }
+}
+else {
     die "Invalid namespace";
 }
 

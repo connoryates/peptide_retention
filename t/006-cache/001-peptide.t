@@ -40,4 +40,19 @@ subtest 'Testing get_peptide_cache' => sub {
     is_deeply($cached, $payload->{retention_info}, "get_peptide_cache is successful");
 };
 
+subtest 'Testing next search results' => sub {
+    my $query = {
+        keywords => 'mannosyltransferase',
+        length   => 17,
+        limit    => 100,
+        offset   => 100,
+    };
+
+    my $id = $cache->set_next_search($query);
+
+    my $cached = $cache->get_next_search($id);
+
+    is_deeply($query, $cached, 'Got cached data structure');
+};
+
 done_testing();

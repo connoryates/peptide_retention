@@ -14,26 +14,26 @@ hook 'before' => sub {
     var authorized => 1;
 };
 
-post '/api/v1/correlate/bull_breese/peptide_length' => sub {
-    my $params = params || {};
+get '/api/v1/correlate/bullbreese/length/:length' => sub {
+    var length => param 'length';
 
-    my $auth   = var 'authorized';
+    forward '/api/v1/correlate/bullbreese';
+};
+
+get '/api/v1/correlate/bullbreese' => sub {
+    my $length   = var 'length' || undef;
+    my $auth     = var 'authorized';
 
     API::X->throw({
          message => "Unauthorized",
          code    => 401
-    }) unless defined $auth;
-
-    API::X->throw({
-        message => "Missing required arg : peptide_length",
-        code    => 400
-    }) unless defined $params->{peptide_length};
+    }) unless $auth;
 
     my $correlation;
     try {
         $correlation = correlate_manager()->correlate_peptides({
-            data   => $params->{peptide_length},
-            filter => 'peptide_length',
+            length    => $length,
+            algorithm => 'hodges',
         });
     } catch {
         API::X->throw({

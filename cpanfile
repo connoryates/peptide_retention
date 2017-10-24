@@ -34,3 +34,5 @@ requires 'Log::Any', 0;
 requires 'Test::Exception', 0;
 requires 'Hash::Diff', 0;
 requires 'Search::Elasticsearch', 0;
+requires 'Test::Pod', 0;
+requires 'Data::UUID', 0;

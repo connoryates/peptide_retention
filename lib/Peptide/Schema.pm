@@ -50,7 +50,8 @@ sub connect_args {
 
 sub dbh {
     my $self = shift;
-    return $INSTANCES{$self}->dbh || $self->dbic->storage->dbh;
+    return $self->dbic->storage->dbh;
+    # return $INSTANCES{$self}->dbh || $self->dbic->storage->dbh;
 }
 
 __PACKAGE__->meta->make_immutable;

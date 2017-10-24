@@ -14,6 +14,7 @@ use Peptide::Retention;
 
 GetOptions(
     "dry_run" => \my $dry_run,
+    "seed=s"  => \my $seed,
 );
 
 warn "--dry_run option available. Kill now if you want to run a dry run first"
@@ -28,8 +29,13 @@ sub run {
     my $path  = "$RealBin/../data/seed/";
     my @files = `ls $path`;
 
+    die 'No seed data found.' unless @files;
+
     foreach my $file (@files) {
         next if $file =~ /tar\.gz/;
+        next unless $file =~ /$seed/;
+
+        print "FILE => $file\n";
 
         $file =~ s/\n//g;
 
@@ -46,6 +52,8 @@ sub run {
             my $peptide  = $seq->primary_seq->seq;
             my $desc     = $seq->primary_seq->description;
             my $protein  = $seq->primary_seq->primary_id;
+
+            print Dumper $seq;
 
             my $tryptic  = $retention->tryptic($peptide);
 

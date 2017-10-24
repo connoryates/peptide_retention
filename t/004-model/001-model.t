@@ -13,11 +13,8 @@ isa_ok($model, 'Peptide::Model');
 subtest 'Checking methods' => sub {
     my @methods = qw(
         add_retention_info _get_retention_info
-        add_retention_info get_bb_retention_correlation_data
-        get_peptide_retention_correlation_data
-        get_peptide_retention_filtered_data
-        _peptide_length_filter get_bar_chart_peptide_data
-        validate_api_key
+        add_retention_info _peptide_length_filter
+        get_bar_chart_peptide_data validate_api_key
     );
 
     can_ok($model, @methods);

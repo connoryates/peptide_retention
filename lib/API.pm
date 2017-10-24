@@ -9,7 +9,7 @@ REST routes for handling peptide retention information
 
 use API::Routes::Peptides;
 
-=head2
+=head1
 
 REST routes for handling file uploads. Currently not in use
 
@@ -17,7 +17,7 @@ REST routes for handling file uploads. Currently not in use
 
 use API::Routes::Upload;
 
-=head3
+=head1
 
 Health check and other main REST routes
 
@@ -25,7 +25,7 @@ Health check and other main REST routes
 
 use API::Routes::Main;
 
-=head4
+=head1
 
 REST route for returning correlation data via HTTP requests
 
@@ -33,14 +33,22 @@ REST route for returning correlation data via HTTP requests
 
 use API::Routes::Correlate;
 
+=head1
 
-=head5
-
-Future routes for charting data
+REST routes for handling mass
 
 =cut
 
-use Dashboard::Routes::Chart;
+use API::Routes::Mass;
+
+=head1
+
+Routes for rendering dashboard
+
+=cut
+
+use Dashboard::Routes::Main;
+
 
 
 true;

@@ -1,8 +1,8 @@
 database:
      pg:
-         dsn: "dbi:Pg:dbname=yeast;host=HOST;port=5432"
-         user: "USER"
-         password: "PASS"
+         dsn: "dbi:Pg:dbname=peptide_retention;host=127.0.0.1;port=5432"
+         user: "connoryates"
+         password: "powerhouse7"
 chi_config:
     server: 127.0.0.1:6379
     driver: Redis

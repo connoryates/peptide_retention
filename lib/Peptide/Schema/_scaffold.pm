@@ -96,6 +96,18 @@ has 'peptide' => (
       is_nullable => 1,
       size => 259
     },
+    average_mass => {
+      data_type => 'NUMERIC',
+      default_value => undef,
+      is_nullable => 1,
+      size => 0
+    },
+    monoisotopic_mass => {
+      data_type => 'NUMERIC',
+      default_value => undef,
+      is_nullable => 1,
+      size => 0
+    },
   );
   __PACKAGE__->has_many( predictions => 'Peptide::Schema::Prediction',{
     'foreign.peptide_id' => 'self.id'
@@ -287,6 +299,18 @@ has 'protein_sequence' => (
       default_value => undef,
       is_nullable => 0,
       size => 259
+    },
+    average_mass => {
+      data_type => 'NUMERIC',
+      default_value => undef,
+      is_nullable => 1,
+      size => 0
+    },
+    monoisotopic_mass => {
+      data_type => 'NUMERIC',
+      default_value => undef,
+      is_nullable => 1,
+      size => 0
     },
   );
   __PACKAGE__->has_many( protein_descriptions => 'Peptide::Schema::ProteinDescription',{

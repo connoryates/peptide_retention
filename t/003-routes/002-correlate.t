@@ -11,12 +11,20 @@ use_ok 'API::Routes::Correlate';
 subtest 'Retention routes' => sub {
     plan skip_all => "ENV{CORRELATION_TESTS} not set" unless defined $ENV{CORRELATION_TESTS};
 
-    route_exists [POST => '/api/v1/correlate/bull_breese/peptide_length'], "Retention correlate";
+    route_exists [GET => '/api/v1/correlate/bullbreese'], "Retention correlate";
     response_status_is [
-            POST => '/api/v1/correlate/bull_breese/peptide_length?peptide_length=17'
+            GET => '/api/v1/correlate/bullbreese'
         ],
         200,
-        "response for POST /api/v1/correlate/bull_breese/peptide_length is 200";
+        "response for GET /api/v1/correlate/bullbreese is 200";
+
+
+    route_exists [GET => '/api/v1/correlate/bullbreese/length/3'], "Retention correlate";
+    response_status_is [
+            GET => '/api/v1/correlate/bullbreese/length/3'
+        ],
+        200,
+        "response for GET /api/v1/correlate/bullbreese is 200";
 };
 
 done_testing();

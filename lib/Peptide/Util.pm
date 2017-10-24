@@ -1,6 +1,7 @@
 package Peptide::Util;
 use Moose;
 
+use Scalar::Util qw(looks_like_number);
 use Hash::Diff qw(diff left_diff);
 use Hash::Merge;
 use Try::Tiny;
@@ -81,4 +82,34 @@ sub merge_if_different {
 
     return $orig;
 }
+
+sub ensure_integer {
+    my ($self, $data) = @_;
+
+    return unless $data;
+
+    my $ret;
+    if (ref($data) and ref($data) eq 'HASH') {
+        my %ret = ();
+
+        while (my ($k, $v) = each %$data) {
+            $ret{$k} = looks_like_number($v) ? 0 + $v : $v;
+        }
+
+        $ret = \%ret;
+    }
+    elsif (!ref($data)) {
+        $ret = looks_like_number($data) ? 0 + $data : $data;
+    }
+
+    return $ret;
+}
+
+sub to_one {
+    my ($self, $num) = @_;
+
+    $num =~ s/\.//g;
+    return $self->ensure_integer(int($num));
+}
+
 __PACKAGE__->meta->make_immutable;

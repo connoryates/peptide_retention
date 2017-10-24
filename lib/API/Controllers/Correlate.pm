@@ -2,7 +2,6 @@ package API::Controllers::Correlate;
 use Moose;
 
 use Peptide::Model;
-use Peptide::Correlation;
 use API::Cache;
 use Try::Tiny;
 use API::X;
@@ -12,13 +11,6 @@ has 'model' => (
     isa     => 'Peptide::Model',
     lazy    => 1,
     builder => '_build_model',
-);
-
-has 'correlation' => (
-    is      => 'ro',
-    isa     => 'Peptide::Correlation',
-    lazy    => 1,
-    builder => '_build_correlation',
 );
 
 has 'cache' => (
@@ -32,13 +24,6 @@ sub _build_model {
     return Peptide::Model->new;
 }
 
-sub _build_correlation {
-    # TODO: deprecate this type
-    return Peptide::Correlation->new(
-        type => 'bullbreese_retention',
-    );
-}
-
 sub _build_cache {
     return API::Cache->new;
 }
@@ -46,50 +31,37 @@ sub _build_cache {
 sub correlate_peptides {
     my ($self, $data) = @_;
 
-    foreach my $required (qw(filter data)) {
+    my $alg = $data->{algorithm};
+
+    if (not $alg) {
         API::X->throw({
-            message =>  "Missing required arg : $required"
-        }) unless defined $data->{$required};
+            message => "Missing required arg : algorithm",
+        });
     }
 
-    my $cache     = $self->cache;
-    my $cache_key = $data->{filter} . $data->{data};
-
-    if ( my $cached = $cache->get_correlate_cache($cache_key) ) {
-        return $cached->{correlation};
+    if ($alg ne 'hodges') {
+        API::X->throw({
+            message => "Unsupported algorithm: $alg",
+        });
     }
 
-    my $filtered;
+    my $length = $data->{length} || undef;
+
+    my $corr;
     try {
-        $filtered = $self->model->get_peptide_retention_filtered_data($data);
+        $corr = $self->model->correlate_data({
+            filter => {
+                length    => $length,
+                algorithm => 'hodges',
+            }
+        });
     } catch {
         API::X->throw({
-            message => "Failed to get correlation data : $_",
+            message => "Failed to get correlation data: $_",
         });
     };
 
-    my $vector_1  = $filtered->{bullbreese};
-    my $vector_2  = $filtered->{retention_info};
-
-    my $correlation;
-    try {
-        $correlation = $self->correlation->correlate($vector_1, $vector_2);
-    } catch {
-        API::X->throw({
-            message => "Failed to correlate datasets : $_",
-        });
-    };
-
-    if ($correlation ne 'n/a') {
-        $cache->set_correlate_cache({
-           key         => $cache_key,
-           correlation => $correlation,
-        });
-
-        return $correlation;
-    }
-
-    return "No data found";
+    return $corr;
 }
 
 __PACKAGE__->meta->make_immutable;

@@ -2,22 +2,51 @@ package Peptide::Model;
 use Moose;
 
 use Peptide::MolecularWeight;
+use List::Util qw(first);
 use Peptide::Retention;
+use API::Elasticsearch;
 use Log::Any qw/$log/;
 use API::Cache::Model;
 use Peptide::Schema;
 use Peptide::Util;
+use Peptide::Mass;
 use Try::Tiny;
 use API::X;
 
-has 'schema' => (
+my $GAIN      = 0.001;
+my $CONF      = 100;
+my $RECURSION = 0;
+
+has gain => (
+    is      => 'rw',
+    isa     => 'Num',
+    default => 0.001,
+    trigger => sub {
+        my ($self, $gain) = @_;
+        $GAIN = $gain;
+    }
+);
+
+has heuristic => (
+    is      => 'rw',
+    isa     => 'Bool',
+    default => 0,
+);
+
+has recursion_limit => (
+    is      => 'ro',
+    isa     => 'Int',
+    default => sub { 10 }
+);
+
+has schema => (
     is      => 'ro',
     isa     => 'Peptide::Schema',
     lazy    => 1,
     builder => '_build_schema',
 );
 
-has 'retention' => (
+has retention => (
     is      => 'ro',
     isa     => 'Peptide::Retention',
     lazy    => 1,
@@ -25,7 +54,7 @@ has 'retention' => (
     handles => [qw(assign_bb_values)],
 );
 
-has 'molecular_weight' => (
+has molecular_weight => (
     is      => 'ro',
     isa     => 'Peptide::MolecularWeight',
     lazy    => 1,
@@ -33,20 +62,35 @@ has 'molecular_weight' => (
     handles => [qw(assign_molecular_weight)],
 );
 
-has 'util' => (
+has util => (
     is      => 'ro',
     isa     => 'Peptide::Util',
     lazy    => 1,
     builder => '_build_util',
-    handles => [qw(hash_merge merge_if_different)],
+    handles => [qw(hash_merge merge_if_different ensure_integer to_one)],
 );
 
-has 'cache' => (
+has cache => (
     is      => 'ro',
     isa     => 'API::Cache::Model',
     lazy    => 1,
     builder => '_build_cache',
     handles => [qw(get_model_cache set_model_cache)],
+);
+
+has elastic => (
+    is      => 'ro',
+    isa     => 'API::Elasticsearch',
+    lazy    => 1,
+    builder => '_build_elastic',
+);
+
+has mass => (
+    is      => 'ro',
+    isa     => 'Peptide::Mass',
+    lazy    => 1,
+    builder => '_build_mass',
+    handles => [qw(average_mass monoisotopic_mass)],
 );
 
 sub _build_schema {
@@ -69,6 +113,14 @@ sub _build_cache {
     return API::Cache::Model->new;
 }
 
+sub _build_elastic {
+    return API::Elasticsearch->new;
+}
+
+sub _build_mass {
+    return Peptide::Mass->new;
+}
+
 sub get_retention_info {
     my ($self, $peptide) = @_;
 
@@ -85,9 +137,7 @@ sub get_retention_info {
     my $data;
     try {
         $data = $peptide_obj->find(
-            {
-                sequence => $peptide,
-            },
+            { sequence => $peptide },
             {
                 prefetch => [
                     'proteins',
@@ -100,7 +150,7 @@ sub get_retention_info {
         );
     } catch {
         API::X->throw({
-            message => "Failed to ge retention info : $_",  
+            message => "Failed to get retention info : $_",  
         });
     };
 
@@ -148,14 +198,12 @@ sub _get_retention_info {
 sub get_associated_proteins {
     my ($self, $peptide) = @_;
 
-    if (not defined $peptide) {
-        API::X->throw({
-            message => "Missing required param : peptide",
-        });
-    }
+    API::X->throw({
+        message => "Missing required param : peptide",
+    }) unless $peptide;
 
     my $peptide_obj = $self->schema->peptide;
-    $peptide_obj->result_class('DBIx::Class::ResultClass::HashRefInflator');
+       $peptide_obj->result_class('DBIx::Class::ResultClass::HashRefInflator');
 
     my $data;
     try {
@@ -176,6 +224,161 @@ sub get_associated_proteins {
     };
 
     return $data;
+}
+
+sub get_all_peptides {
+    my ($self, $args) = @_;
+
+    my $payload = $args->{length}
+        ? { length => $args->{length} }
+        : {};
+
+    my @peptides;
+    try {
+        my $dbh = $self->schema->dbh;
+
+        my $sql = <<SQL;
+        SELECT * FROM peptides p
+            JOIN predictions pr
+                ON pr.peptide_id = p.id
+                    WHERE p.length = ?
+            
+SQL
+
+        my $sth = $dbh->prepare($sql);
+           $sth->execute($args->{length});
+
+        while (my $row = $sth->fetchrow_hashref) {
+            push @peptides, $self->ensure_integer($row);
+        }
+    } catch {
+        API::X->throw({
+            message => "Failed to get peptides: $_",
+        });
+    };
+
+    return \@peptides;
+}
+
+sub search_peptides {
+    my ($self, $args) = @_;
+
+    API::X->throw({
+        message => 'Missing requried arg : $args',
+    }) unless $args;
+
+    my $keywords = $args->{keywords} || undef;
+    my %payload  = (
+        primary_ids => [],
+    );
+
+    if ($keywords) {
+        my $search_results = $self->elastic->search_peptide({
+            keywords => $keywords,
+        });
+
+        if ($search_results) {
+            for (@{$search_results->{hits}->{hits}}) {
+                push @{$payload{primary_ids}}, $_->{_id};
+            }
+        }
+    }
+
+    my $payload = $self->hash_merge(\%payload, $args);
+
+    my @results = ();
+    try {
+        my $sql = $self->_format_search($payload);
+        my $dbh = $self->schema->dbh;
+        my $sth = $dbh->prepare($sql);
+
+        my $exec = $self->_format_search_exec($payload);
+
+        $sth->execute(@$exec);
+
+        while (my $row = $sth->fetchrow_hashref) {
+            push @results, $row;
+        }
+    } catch {
+        $log->warn("Failed to search peptides: $_");
+
+        API::X->throw({
+            message => "Failed to search peptides: $_",
+        });
+    };
+
+    return \@results;
+}
+
+sub _format_search {
+    my ($self, $args) = @_;
+
+    API::X->throw({
+        message => 'Missing required arg : args',
+    }) unless $args;
+
+    my $sql = <<SQL;
+    SELECT
+        ps.sequence as protein_sequence,
+        pr.algorithm,
+        p.molecular_weight,
+        pr.predicted_time,
+        p.length,
+        p.sequence,
+        p.bullbreese,
+        p.real_retention_time,
+        p.cleavage,
+        ps.primary_id
+    FROM peptides p
+SQL
+
+    if ($args->{primary_ids} and @{$args->{primary_ids}}
+        and first { $_ } @{$args->{primary_ids}}) {
+        my $join = <<JOIN;
+            JOIN predictions pr
+                ON pr.peptide_id = p.id
+            JOIN proteins pro
+                ON pro.peptide_id = p.id
+            JOIN protein_sequences ps
+                ON ps.id = pro.sequence_id
+                    WHERE EXISTS (SELECT id FROM protein_sequences WHERE primary_id IN (
+JOIN
+
+        chomp($join);
+        $join .= " ?," for @{$args->{primary_ids}};
+        $join =~ s{,$}{};
+        $join .= "))";
+
+        if ($args->{length}) {
+            my $where = q| AND p.length = ?|;
+
+            $join .= $where;
+        }
+
+        $sql .= $join;
+    }
+
+    $sql .= ' OFFSET ' . $args->{offset} if $args->{offset};
+    $sql .= ' LIMIT ' . $args->{limit} if $args->{limit};
+
+    return $sql;
+}
+
+sub _format_search_exec {
+    my ($self, $args) = @_;
+
+    API::X->throw({
+        message => 'Missing required arg : args',
+    }) unless $args;
+
+    my @exec = ();
+    if (first { $_ } @{$args->{primary_ids}}) {
+        push @exec, @{$args->{primary_ids}};
+    }
+
+    push @exec, $args->{length} if $args->{length};
+
+    return \@exec;
 }
 
 sub add_retention_info {
@@ -234,7 +437,7 @@ sub add_retention_info {
         });
     }
 
-    if (not defined $ret->{bullbreese}) {
+    if (not $ret->{bullbreese}) {
         try {
             $ret->{bullbreese} = $self->assign_bb_values($ret->{sequence});
         } catch {
@@ -244,7 +447,7 @@ sub add_retention_info {
         };
     }
 
-    if (not defined $ret->{molecular_weight}) {
+    if (not $ret->{molecular_weight}) {
        try {
            $ret->{molecular_weight} = $self->assign_molecular_weight($ret->{sequence});
        } catch {
@@ -254,6 +457,14 @@ sub add_retention_info {
        };
     }
 
+    if (not $ret->{average_mass}) {
+        $ret->{average_mass} = $self->average_mass($ret->{sequence});
+    }
+
+    if (not $ret->{monoisotopic_mass}) {
+        $ret->{monoisotopic_mass} = $self->monoisotopic_mass($ret->{sequence});
+    }
+
     my $payload = {
         cleavage            => $ret->{cleavage},
         molecular_weight    => $ret->{molecular_weight},
@@ -261,6 +472,8 @@ sub add_retention_info {
         sequence            => $ret->{sequence},
         length              => length( $ret->{sequence} ),
         real_retention_time => $ret->{real_retention_time} // undef,
+        average_mass        => $ret->{average_mass},
+        monoisotopic_mass   => $ret->{monoisotopic_mass},
     };
 
     my $status;
@@ -321,13 +534,22 @@ sub add_retention_info {
                 primary_id => $protein_info->{primary_id},
             });
 
+            # TODO: remove unique index on primary key
             if (not defined $desc_obj) {
-                $desc_obj = $self->schema->protein_description->create({
+                my $desc_obj = $self->schema->protein_description->create({
                     primary_id  => $protein_info->{primary_id},
                     description => $protein_info->{description},
                 });
 
                 $desc_obj->update;
+
+                my ($title) = $protein_info->{primary_id} =~ /^.+\|.+\|(.+)$/;
+
+                $self->elastic->index_peptide({
+                    title      => $title,
+                    primary_id => $protein_info->{primary_id},
+                    body       => $protein_info->{description},
+                });
             }
 
             if (@predicted_retentions) {
@@ -364,179 +586,230 @@ sub add_retention_info {
     return $status;
 }
 
-sub get_bb_retention_correlation_data {
-    my $self = shift;
+sub correlate_data {
+    my ($self, $args) = @_;
 
-    my $rs;
-    try {
-        $rs = $self->schema->peptide->search({})
-    } catch {
+    if (not $args) {
         API::X->throw({
-            message => "Failed to get correlation data : $_",
+            message => 'Missing args',
+        });
+    }
+
+    my $dbh    = $self->schema->dbh;
+    my $filter = $args->{filter};
+
+    my $sql = $self->_format_correlate_sql($filter);
+
+    my $corr;
+    try {
+        my $sth = $dbh->prepare($sql);
+
+        $filter->{length} ? $sth->execute($filter->{length}) : $sth->execute;
+
+        ($corr) = $sth->fetchrow_array;
+    } catch {
+        $log->warn("Failed to correlate data sets: $_");
+
+        API::X->throw({
+            message => "Failed to correlate data sets: $_",
         });
     };
 
-    my @correlation_data = ();;
-
-    while (my $val  = $rs->next) {
-        my $peptide = $val->{_column_data};
-
-        next unless defined $peptide;
-
-        my @predictions;
-        try {
-            my $peptide_id = $peptide->{id};
-            @predictions   = map { $_->{_column_data} }
-              $self->schema->prediction->search({ peptide_id => $peptide_id });
-        } catch {
-            $log->warn("Failed to get predictions for : $peptide");
-        };
-
-        next unless @predictions;
-
-        push @correlation_data, {
-            bullbreese  => $peptide->{bullbreese},
-            predictions => \@predictions,
-        };
-    }
-
-    return \@correlation_data;
+    return $corr;
 }
 
-sub get_peptide_retention_correlation_data {
-    my $self = shift;
-
-    my $rs;
-    try {
-        $rs = $self->schema->peptide->search({});
-    } catch {
-        API::X->throw({
-            message => "Failed to get correlation data : $_",
-        });
-    };
-
-    my @correlation_data = ();
-
-    while (my $val  = $rs->next) {
-        my $peptide = $val->{_column_data};
-
-        next unless defined $peptide;
-
-        my @predictions;
-        try {
-            my $peptide_id  = $peptide->{id};
-            @predictions = map { $_->{_column_data} }
-              $self->schema->prediction->search({ peptide_id => $peptide_id });
-        } catch {
-            $log->warn("Failed to get predictions for : $peptide");
-        };
-
-        next unless @predictions;
-
-        push @correlation_data, {
-            length      => $peptide->{length},
-            predictions => \@predictions,
-        };
-    }
-
-    return \@correlation_data;
-}
-
-sub get_peptide_retention_filtered_data {
+sub _format_correlate_sql {
     my ($self, $filter) = @_;
 
-    if (not defined $filter) {
-        API::X->throw({
-            message => "Missing required param : filter",
-        });
-    }
+    my $alg = $filter->{algorithm};
 
-    if (!ref($filter) or ref($filter) ne 'HASH') {
-        API::X->throw({
-            message => "Param filter must be a HashRef",
-        });
-    }
+    my $sql;
+    if ($alg =~ /hodges/) {
+        $sql = <<SQL;
+            SELECT corr(p.bullbreese, pr.predicted_time)
+                FROM peptides p
+                    JOIN predictions pr
+                        ON p.id = pr.peptide_id
+SQL
 
-    foreach my $required (qw(filter data)) {
-        if (not defined $filter->{$required}) {
-            API::X->throw({
-                message => "Missing required arg : $required",
-            });
+        if ($filter->{length}) {
+            $sql .= <<LENGTH;
+                WHERE
+                    p.length = ?
+LENGTH
         }
     }
-
-    my $filter_type = $filter->{filter};
-    my $filter_data = $filter->{data};
-
-    # TODO: support more than one filter type
-    if (not defined $filter_type or $filter_type !~ /peptide_length/) {
+    else {
         API::X->throw({
-            message =>  "Unknown or unsupported filter type",
+            message => 'Unsupported algorithm filter.',
         });
     }
 
-    my $method = '_' . $filter_type . '_filter';
-
-    my $correlation_data;
-    try {
-        $correlation_data = $self->$method($filter_data);
-    } catch {
-        API::X->throw({
-            message => "Failed to get filter data : $_",
-        });
-    };
-
-    return $correlation_data;
+    return $sql;
 }
 
-sub _peptide_length_filter {
-    my ($self, $peptide_filter_length) = @_;
+sub get_protein_count { shift->get_count('protein') }
+sub get_peptide_count { shift->get_count('peptide') }
 
-    if (not defined $peptide_filter_length) {
-        API::X->throw({
-            message => "Missing required arg : peptide_filter_length",
-        });
-    }
+sub get_count {
+    my ($self, $table) = @_;
 
-    my $rs;
+    my $count;
     try {
-        $rs = $self->schema->peptide->search({
-           length => "$peptide_filter_length",
-        });
+        my $t = $self->schema->$table;
+           $count = $t->count;
     } catch {
-        $log->warn("Failed to get peptide filter length data for filter length : $peptide_filter_length : $_");
         API::X->throw({
-            message => "Failed to get peptide filter length data : $_",
+            message => "Failed to get table count : $_",
         });
     };
 
-    my @correlation_data = ();
+    return $count;
+}
 
-    my $cursor = $rs->cursor;
+sub search_mass {
+    my ($self, $args) = @_;
 
-    while (my @peptides = $cursor->next) {
-        my $pred_obj;
-        try {
-            $pred_obj = $self->schema->prediction->search({
-                peptide_id => $peptides[0],
-            });
-        } catch {
-            API::X->throw({
-               message => "Failed to get prediction data : $_",
-            });
-        };
+    API::X->throw({
+        message => 'Missing required arg : args',
+    }) unless $args;
 
-        my $_cursor = $pred_obj->cursor;
-
-        while (my @predictions = $_cursor->next) {
-            push @correlation_data, {
-                bullbreese  => $peptides[3],
-                predictions => $predictions[3],
-            };
-        }
+    if (not $args->{average} xor $args->{monoisotopic}) {
+        API::X->throw({
+            message => 'Missing required arg : mass_type',
+        });
     }
 
-    return \@correlation_data;
+    my ($mass, $mass_type, $data);
+    try {
+        if ($args->{average}) {
+            $mass_type = 'average_mass',
+            $mass      = $args->{average};
+        }
+        elsif ($args->{monoisotopic}) {
+            $mass_type = 'monoisotopic_mass',
+            $mass      = $args->{monoisotopic};
+        }
+
+        $data = $self->schema->peptide->find({
+            $mass_type => $mass,
+        });
+    } catch {
+        API::X->throw({
+            message => "Failed to search mass : $_",
+        });
+    };
+
+    my $heuristic_args = {
+        mass_type => $mass_type,
+        mass      => $mass,
+    };
+
+    my $ret = $data->{_column_data};
+
+    if (not $ret and $self->heuristic) {
+        $ret = $self->_heuristic_search($heuristic_args);
+    }
+
+    if ($CONF > 0 and $ret->{sequence}) {
+        $ret->{confidence} = $CONF . '%';
+    }
+
+    $self->_reset_mass_search;
+
+    return $ret;
+}
+
+sub _reset_mass_search {
+    my $self = shift;
+
+    $GAIN      = 0;
+    $CONF      = 100;
+    $RECURSION = 0;
+}
+
+sub _adjust_conf {
+    my $self = shift;
+    my $gain = $self->gain;
+
+    my $limit = $GAIN > $gain
+        ? 5 * ($gain * $self->to_one($gain))
+        : 1;
+
+    return $limit;
+}
+
+sub _heuristic_search {
+    my ($self, $args) = @_;
+
+    return unless $CONF > 0;
+
+    my $best;
+    try {
+        my $dbh = $self->schema->dbh;
+        my $sql = $self->_format_heuristic($args->{mass_type});
+        my $sth = $dbh->prepare($sql);
+
+        my $mass  = $args->{mass};
+
+        my $ceil  = $mass + $self->gain;
+        my $floor = $mass - $self->gain;
+
+        my $limit = 1;
+        # my $limit = $self->_heuristic_limit;
+
+        $CONF -= $self->_adjust_conf;
+        $limit = int($limit);
+
+        my @prepare = map { $self->ensure_integer($_) }
+            ($floor, $ceil, $mass, $limit);
+
+        $sth->execute(@prepare);
+
+        while (my $row = $sth->fetchrow_hashref) {
+            if ($row->{sequence}) {
+                $best = $row;
+                last;
+            }
+            else {
+                $CONF -= 1;
+            }
+        }
+    } catch {
+        API::X->throw({
+            message => "Failed to get heuristic results : $_",
+        });
+    };
+
+    if (not $best or not $best->{sequence}) {
+        $self->_increase_gain;
+        $RECURSION++;
+
+        return $self->_heuristic_search($args)
+            unless $self->recursion_limit <= $RECURSION;
+    }
+
+    return $best;
+}
+
+sub _increase_gain {
+    return $GAIN + shift->gain;
+}
+
+sub _format_heuristic {
+    my ($self, $mass_type) = @_;
+
+    my $sql = qq{
+        SELECT * FROM peptides
+            WHERE
+                $mass_type >= ?
+                AND
+                $mass_type <= ?
+            ORDER BY abs(?)
+            LIMIT ?
+    };
+
+    return $sql;
 }
 
 sub get_bar_chart_peptide_data {
@@ -578,31 +851,12 @@ Class to handle database queries
 
 Queries the database for the given peptide input
 
-=head2 add_retention_info
+=head1 add_retention_info
 
 Adds the given peptide input and retention info to the database
 
-=head3 get_bb_retention_correlation_data 
-
-Queries the database for all peptides and returns a HashRef with
-an ArrayRef of all Bull and Breese values and an ArrayRef of all
-retention info
-
-=head4 get_peptide_length_retention_correlation_data 
-
-Queries the database for all peptides and returns a HashRef with
-an ArrayRef of all peptide lengths and an ArrayRef of all retention
-info
-
-CAUTION: these methods hold all database values in memory,
-caching solution coming
-
-=head5 get_bar_chart_peptide_data
+=head1 get_bar_chart_peptide_data
 
 Future front-end query for displaying bar chart data in D3.js
-
-=head6 get_peptide_retention_filtered_data
-
-Return a correlation data structure with specified filters
 
 =cut

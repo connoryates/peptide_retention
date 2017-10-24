@@ -6,7 +6,7 @@ use Try::Tiny;
 use DateTime;
 use API::X;
 
-has 'elastic' => (
+has elastic => (
     is      => 'ro',
     isa     => 'Search::Elasticsearch::Client::5_0::Direct',
     lazy    => 1,
@@ -14,17 +14,23 @@ has 'elastic' => (
 );
 
 sub _build_elastic {
-    return Search::Elasticsearch->new();
-#        nodes => [ 'peptide_retention:9200' ],
-#    );
+    return Search::Elasticsearch->new;
 }
 
 sub search_peptide {
-    my ($self, $keywords) = @_;
+    my ($self, $args) = @_;
+
+    if (not defined $args) {
+        API::X->throw({
+            message => "Missing required arg : args",
+        });
+    }
+
+    my $keywords = $args->{keywords};
 
     if (not defined $keywords) {
         API::X->throw({
-            message => "Missing required arg : keywords",
+            message => "Missing required arg key : keywords",
         });
     }
 
@@ -34,7 +40,7 @@ sub search_peptide {
             index => 'peptide_retention',
             body  => {
                 query => {
-                    match => { content => $keywords },
+                    match => { body => $keywords },
                 }
             },
         );
@@ -61,6 +67,9 @@ sub index_peptide {
             message => "Arg info must be a HashRef",
         });
     }
+
+    use Data::Dumper;
+    print Dumper $info;
 
     foreach my $required (qw(title body primary_id)) {
         if (not defined $info->{$required}) {

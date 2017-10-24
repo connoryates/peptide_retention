@@ -17,7 +17,8 @@ sub config {
 
 sub _root {
     my $self = shift;
-    my $root = "/home/$ENV{USER}/peptide_retention/environments";
+    my $root = "/Users/connoryates/peptide_retention/environments";
+    # my $root = "/home/$ENV{USER}/peptide_retention/environments";
 
     return $root;
 }

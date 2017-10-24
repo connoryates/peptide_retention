@@ -15,11 +15,9 @@ has 'namespace' => ( is => 'rw', isa => 'Str', default => sub { return "peptide"
 sub set_peptide_cache {
     my ($self, $data) = @_;
 
-    if (not defined $data) {
-        API::X->throw({
-            message => "Missing required param : $data",
-        });
-    }
+    API::X->throw({
+        message => "Missing required param : $data",
+    }) unless $data;
 
     foreach my $required (qw(peptide retention_info)) {
         API::X->throw({
@@ -48,11 +46,9 @@ sub set_peptide_cache {
 sub get_peptide_cache {
     my ($self, $peptide) = @_;
 
-    if (not defined $peptide) {
-        API::X->throw({
-            message => "Missing required arg : peptide",
-        });
-    }
+    API::X->throw({
+        message => "Missing required arg : peptide",
+    }) unless $peptide;
 
     my $data;
     try {
@@ -69,23 +65,70 @@ sub get_peptide_cache {
 sub is_cached {
     my ($self, $peptide) = @_;
 
-    if (not defined $peptide) {
-        API::X->throw({
-            message => "Missing required param : peptide",
-        });
-    }
+    API::X->throw({
+        message => "Missing required param : peptide",
+    }) unless $peptide;
 
     return $self->chi->is_valid($peptide);
+}
+
+sub get_next_search {
+    my ($self, $key) = @_;
+
+    API::X->throw({
+        message => "Missing required param : key",
+    }) unless $key;
+
+    my $args;
+    try {
+        my $json = $self->chi->get($key);
+           $args = decode_json($json);
+    } catch {
+        $log->warn("Failed to get next search result : $_");
+
+        API::X->throw({
+            message => "Failed to get next search result : $_",
+        });
+    };
+
+    return $args;
+}
+
+sub set_next_search {
+    my ($self, $args) = @_;
+
+    API::X->throw({
+        message => "Missing required param : args",
+    }) unless $args;
+
+    API::X->throw({
+        message => "Param args must be a reference",
+    }) unless ref($args);
+
+    API::X->throw({
+        message => "Param args must be a HASH",
+    }) unless ref($args) eq 'HASH';
+
+    my $key;
+    try {
+        my $json = encode_json($args);
+           $key  = $self->_create_uuid;
+
+        $self->chi->set($key, $json, EXPIRATION_TIME);
+    } catch {
+        $log->warn("Failed to set next search : $_");
+        $key = undef;
+    };
+
+    return $key;
 }
 
 sub remove_key {
     my ($self, $key) = @_;
 
-    if (not defined $key) {
-        API::X->throw({
-            message => "Missing required param : key",
-        });
-    }
+    API::X->throw({
+        message => "Missing required param : key",
+    }) unless $key;
 
     my $status;
     try {
@@ -111,7 +154,7 @@ Class for handling Peptide Redis cache
 Sets a cache entry with the peptide sequence as the key and the retention information as the value.
 Encodes information to JSON before set.
 
-=head2 get_peptide_cache
+=head1 get_peptide_cache
 
 Gets a cache entry based on the supplied peptide sequence. Decodes the JSON structure before returning.
 
