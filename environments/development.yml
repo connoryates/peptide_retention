@@ -1,8 +1,8 @@
 database:
      pg:
          dsn: "dbi:Pg:dbname=peptide_retention;host=127.0.0.1;port=5432"
-         user: "connoryates"
-         password: "powerhouse7"
+         user: ""
+         password: ""
 chi_config:
     server: 127.0.0.1:6379
     driver: Redis
